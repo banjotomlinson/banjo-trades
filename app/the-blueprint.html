@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Blueprint - Banjo Trades</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    background: #fff;
+    line-height: 1.7;
+    font-size: 14px;
+  }
+  .page {
+    page-break-after: always;
+    min-height: 100vh;
+    padding: 60px 50px;
+    position: relative;
+  }
+  .page:last-child { page-break-after: avoid; }
+
+  /* Cover */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: #fff;
+  }
+  .cover-line {
+    width: 80px;
+    height: 4px;
+    background: #1a73e8;
+    margin: 30px auto;
+  }
+  .cover h1 {
+    font-size: 72px;
+    font-weight: 800;
+    letter-spacing: 8px;
+    color: #0d47a1;
+    text-transform: uppercase;
+  }
+  .cover .subtitle {
+    font-size: 18px;
+    color: #555;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+  .cover .author {
+    font-size: 14px;
+    color: #888;
+    letter-spacing: 2px;
+    margin-top: 40px;
+    text-transform: uppercase;
+  }
+
+  /* TOC */
+  .toc h2 {
+    font-size: 32px;
+    color: #0d47a1;
+    margin-bottom: 30px;
+    font-weight: 700;
+  }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dotted #ddd;
+    font-size: 14px;
+  }
+  .toc-item span:first-child { color: #1a1a1a; }
+  .toc-item span:last-child { color: #1a73e8; font-weight: 600; }
+  .toc-section {
+    font-weight: 700;
+    color: #0d47a1;
+    margin-top: 20px;
+    padding: 8px 0;
+    border-bottom: 2px solid #0d47a1;
+    font-size: 15px;
+  }
+
+  /* Section headers */
+  .section-divider {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .section-divider h2 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #0d47a1;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+  .section-divider .section-sub {
+    font-size: 16px;
+    color: #666;
+    margin-top: 15px;
+    letter-spacing: 2px;
+  }
+  .section-divider .blue-line {
+    width: 60px;
+    height: 3px;
+    background: #1a73e8;
+    margin: 25px auto;
+  }
+
+  /* Day headers */
+  .day-header {
+    background: #0d47a1;
+    color: #fff;
+    padding: 15px 25px;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+  }
+
+  /* Lesson headers */
+  h3.lesson {
+    font-size: 20px;
+    color: #1a73e8;
+    font-weight: 700;
+    margin: 30px 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e8f0fe;
+  }
+  h3.lesson .lesson-num {
+    color: #0d47a1;
+    font-weight: 800;
+  }
+
+  /* Content */
+  p { margin-bottom: 12px; }
+  ul { margin: 10px 0 15px 25px; }
+  li { margin-bottom: 6px; }
+  strong { color: #0d47a1; }
+  .highlight-box {
+    background: #e8f0fe;
+    border-left: 4px solid #1a73e8;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .key-concept {
+    background: #0d47a1;
+    color: #fff;
+    padding: 20px 25px;
+    margin: 20px 0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .quote-block {
+    font-size: 18px;
+    font-style: italic;
+    color: #555;
+    border-left: 4px solid #1a73e8;
+    padding: 15px 25px;
+    margin: 20px 0;
+  }
+  .tip-box {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid #1a73e8;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .tip-box .tip-label {
+    font-weight: 700;
+    color: #1a73e8;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  /* I Want This page */
+  .want-this {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .want-this .want-text {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0d47a1;
+    line-height: 2.2;
+  }
+  .want-this .want-text span {
+    display: block;
+  }
+  .want-this .want-text span:nth-child(1) { font-size: 22px; opacity: 0.5; }
+  .want-this .want-text span:nth-child(2) { font-size: 24px; opacity: 0.55; }
+  .want-this .want-text span:nth-child(3) { font-size: 28px; opacity: 0.6; }
+  .want-this .want-text span:nth-child(4) { font-size: 32px; opacity: 0.7; }
+  .want-this .want-text span:nth-child(5) { font-size: 36px; opacity: 0.75; }
+  .want-this .want-text span:nth-child(6) { font-size: 40px; opacity: 0.8; }
+  .want-this .want-text span:nth-child(7) { font-size: 44px; opacity: 0.85; }
+  .want-this .want-text span:nth-child(8) { font-size: 48px; opacity: 0.9; }
+  .want-this .want-text span:nth-child(9) { font-size: 52px; opacity: 0.95; }
+  .want-this .want-text span:nth-child(10) { font-size: 58px; opacity: 1; font-weight: 900; }
+
+  /* Checklist */
+  .checklist {
+    list-style: none;
+    margin-left: 0;
+  }
+  .checklist li {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    position: relative;
+    padding-left: 35px;
+  }
+  .checklist li::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 12px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #1a73e8;
+    border-radius: 3px;
+  }
+
+  /* Diagrams */
+  .diagram-container {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 25px;
+    margin: 20px 0;
+    text-align: center;
+  }
+  .diagram-container svg {
+    max-width: 100%;
+  }
+  .diagram-label {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* Goals */
+  .goal-card {
+    background: #fff;
+    border: 2px solid #e8f0fe;
+    border-radius: 10px;
+    padding: 20px 25px;
+    margin: 10px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  .goal-num {
+    background: #1a73e8;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .goal-text { font-size: 15px; line-height: 1.6; }
+
+  /* Strategy steps */
+  .step-box {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin: 12px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  .step-num {
+    background: #0d47a1;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  /* Confluences grid */
+  .conf-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 15px 0;
+  }
+  .conf-item {
+    background: #e8f0fe;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #0d47a1;
+    text-align: center;
+  }
+
+  /* Session times table */
+  .time-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+  }
+  .time-table th {
+    background: #0d47a1;
+    color: #fff;
+    padding: 10px 15px;
+    text-align: left;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .time-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+  }
+  .time-table tr:nth-child(even) { background: #f8f9fa; }
+
+  /* Footer */
+  .page-footer {
+    position: absolute;
+    bottom: 30px;
+    left: 50px;
+    right: 50px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #bbb;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+  }
+
+  @media print {
+    .page { min-height: auto; padding: 0; }
+    body { font-size: 12px; }
+    .day-header { font-size: 20px; }
+    h3.lesson { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER ==================== -->
+<div class="page cover">
+  <div class="cover-line"></div>
+  <h1>The Blueprint</h1>
+  <div class="cover-line"></div>
+  <p class="subtitle">A Two-Year Journey Into Day Trading</p>
+  <p class="author">Banjo Trades</p>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="page toc">
+  <h2>Table of Contents</h2>
+
+  <div class="toc-section">Part 1: The Beginning</div>
+  <div class="toc-item"><span>Day 1: Introduction to Day Trading</span><span>4</span></div>
+  <div class="toc-item"><span>Lesson 1: How to Start Day Trading</span><span>4</span></div>
+  <div class="toc-item"><span>Lesson 2: How to Be Good at Trading</span><span>5</span></div>
+  <div class="toc-item"><span>"I Want This"</span><span>6</span></div>
+
+  <div class="toc-section">Part 2: Core Concepts</div>
+  <div class="toc-item"><span>Day 2: YouTube Mindset, Experience, Candlesticks</span><span>7</span></div>
+  <div class="toc-item"><span>Day 3: Highs, Lows, Trends, Break of Structure</span><span>9</span></div>
+  <div class="toc-item"><span>Liquidity (Parts 1 &amp; 2)</span><span>11</span></div>
+
+  <div class="toc-section">Part 3: Advanced Concepts</div>
+  <div class="toc-item"><span>Day 4: Order Blocks, Fair Value Gaps</span><span>14</span></div>
+  <div class="toc-item"><span>Day 5: Imbalances, Balanced Price Action</span><span>16</span></div>
+  <div class="toc-item"><span>Day 6: IFVG, BPR, Equilibrium, Breaker Blocks, SMT</span><span>18</span></div>
+
+  <div class="toc-section">Part 4: Strategy Creation</div>
+  <div class="toc-item"><span>Strategy Creation (Parts 1, 2, 3)</span><span>22</span></div>
+  <div class="toc-item"><span>Execution Checklist</span><span>24</span></div>
+
+  <div class="toc-section">Part 5: The Blueprint</div>
+  <div class="toc-item"><span>Long Term Goals</span><span>26</span></div>
+  <div class="toc-item"><span>Short Term Goals</span><span>27</span></div>
+  <div class="toc-item"><span>3 Keys to Profitability</span><span>28</span></div>
+
+  <div class="toc-section">Part 6: Psychology</div>
+  <div class="toc-item"><span>Psychology Part 1: Mindset</span><span>29</span></div>
+  <div class="toc-item"><span>Psychology Part 2: Application</span><span>32</span></div>
+  <div class="toc-item"><span>Shiny Object Syndrome</span><span>33</span></div>
+  <div class="toc-item"><span>Effort = Results</span><span>34</span></div>
+
+  <div class="toc-section">Part 7: Risk Management</div>
+  <div class="toc-item"><span>Risk Management Deep Dive</span><span>35</span></div>
+
+  <div class="toc-section">Part 8: Confluences &amp; Strategy</div>
+  <div class="toc-item"><span>Trading with Confluences</span><span>37</span></div>
+  <div class="toc-item"><span>Liquidity, Imbalances, FVGs (Detailed)</span><span>39</span></div>
+  <div class="toc-item"><span>IFVG, Break of Structure, Order Blocks</span><span>42</span></div>
+  <div class="toc-item"><span>SMT Divergence, Fibonacci, Draws on Liquidity</span><span>45</span></div>
+  <div class="toc-item"><span>Finding Daily Bias (3 Situations)</span><span>48</span></div>
+  <div class="toc-item"><span>Stop Losses &amp; Take Profits</span><span>51</span></div>
+  <div class="toc-item"><span>Strategy Explained (Full Walkthrough)</span><span>52</span></div>
+
+  <div class="toc-section">Part 9: Notes &amp; The Journey Forward</div>
+  <div class="toc-item"><span>NDOG / NWOG Notes</span><span>54</span></div>
+  <div class="toc-item"><span>FVG &amp; EQ Tips</span><span>55</span></div>
+  <div class="toc-item"><span>Practice Trading Log</span><span>56</span></div>
+  <div class="toc-item"><span>Goals for 2026-2027</span><span>57</span></div>
+</div>
+
+<!-- ==================== PART 1: THE BEGINNING ==================== -->
+<div class="page section-divider">
+  <h2>Part One</h2>
+  <div class="blue-line"></div>
+  <p class="section-sub">The Beginning</p>
+</div>
+
+<!-- DAY 1 -->
+<div class="page">
+  <div class="day-header">Day 1</div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 1:</span> Introduction to Day Trading</h3>
+  <p><strong>Source:</strong> TJR. How to start day trading as a beginner in 2026 (4 hours).</p>
+
+  <div class="highlight-box">
+    <strong>What is Day Trading?</strong><br>
+    It's about making money. How to make money: being able to get into the marketplace and get clarity, with a high probability, on where price wants to go. Go into a market with the headspace of how to predict where price is going.
+  </div>
+
+  <div class="key-concept">Core of Day Trading: Predicting</div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 1 (continued):</span> How to Interact with the Market</h3>
+  <p>Watch videos, interact into real live trades.</p>
+
+  <div class="highlight-box">
+    <strong>Key Notes:</strong>
+    <ul>
+      <li>Rarely fail. Fail to learn.</li>
+      <li>Learn, learn, win, win. Be patient.</li>
+      <li>Everything helps me.</li>
+      <li>Follow the "big boys". Stick to plan.</li>
+      <li>Don't trade with emotion.</li>
+    </ul>
+  </div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 2:</span> How to Be Good at Trading</h3>
+  <p>Stick to your strategy and stick to it. Choose a mentor, "TJR". Listen to him.</p>
+
+  <p><strong>Candlestick Basics:</strong></p>
+  <ul>
+    <li>Ingredients to a high and a low</li>
+    <li>Green candle: open, handle, body (green = bullish)</li>
+    <li>Red candle: body, handle (red = bearish)</li>
+    <li>Candle sticks are either red or green</li>
+  </ul>
+
+  <!-- Candlestick diagram -->
+  <div class="diagram-container">
+    <svg width="400" height="250" viewBox="0 0 400 250">
+      <!-- Green candle -->
+      <line x1="100" y1="30" x2="100" y2="80" stroke="#1a73e8" stroke-width="2"/>
+      <rect x="80" y="80" width="40" height="100" fill="#1a73e8" rx="2"/>
+      <line x1="100" y1="180" x2="100" y2="220" stroke="#1a73e8" stroke-width="2"/>
+      <text x="100" y="20" text-anchor="middle" font-size="11" fill="#888">High</text>
+      <text x="55" y="90" text-anchor="end" font-size="11" fill="#888">Close</text>
+      <text x="55" y="175" text-anchor="end" font-size="11" fill="#888">Open</text>
+      <text x="100" y="240" text-anchor="middle" font-size="11" fill="#888">Low</text>
+      <text x="100" y="250" text-anchor="middle" font-size="12" fill="#1a73e8" font-weight="700">BULLISH</text>
+
+      <!-- Red candle -->
+      <line x1="300" y1="30" x2="300" y2="80" stroke="#d32f2f" stroke-width="2"/>
+      <rect x="280" y="80" width="40" height="100" fill="#d32f2f" rx="2"/>
+      <line x1="300" y1="180" x2="300" y2="220" stroke="#d32f2f" stroke-width="2"/>
+      <text x="300" y="20" text-anchor="middle" font-size="11" fill="#888">High</text>
+      <text x="345" y="90" text-anchor="start" font-size="11" fill="#888">Open</text>
+      <text x="345" y="175" text-anchor="start" font-size="11" fill="#888">Close</text>
+      <text x="300" y="240" text-anchor="middle" font-size="11" fill="#888">Low</text>
+      <text x="300" y="250" text-anchor="middle" font-size="12" fill="#d32f2f" font-weight="700">BEARISH</text>
+
+      <!-- Labels -->
+      <text x="30" y="130" text-anchor="start" font-size="10" fill="#aaa" transform="rotate(-90,30,130)">Candle Body</text>
+      <text x="15" y="50" text-anchor="start" font-size="10" fill="#aaa" transform="rotate(-90,15,50)">Wick</text>
+    </svg>
+    <div class="diagram-label">Candlestick Anatomy: Bullish (Green) vs Bearish (Red)</div>
+  </div>
+</div>
+
+<!-- I WANT THIS PAGE -->
+<div class="page want-this">
+  <div class="want-text">
+    <span>I want this.</span>
+    <span>I want this.</span>
+    <span>I want this.</span>
+    <span>I want this.</span>
+    <span>I want this.</span>
+    <span>I want this.</span>
+    <span>I want this.</span>
+    <span>I want this.</span>
+    <span>I want this.</span>
+    <span>I WANT THIS.</span>
+  </div>
+</div>
+
+<!-- DAY 2 -->
+<div class="page">
+  <div class="day-header">Day 2</div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 3:</span> YouTube Mindset / Profitable Mindset</h3>
+
+  <div class="highlight-box">
+    <strong>The Mindset Shift:</strong>
+    <ol>
+      <li>Several strategies exist. Start with one. Master it.</li>
+      <li>More videos = more confusion. Over thinking leads to over trading.</li>
+      <li>Simplify everything.</li>
+      <li>Stay strong.</li>
+      <li>Give it way too long. 5 years, not 6 months.</li>
+      <li>Short thinking is quick thinking.</li>
+      <li>Over practice. Just do one. Master one.</li>
+    </ol>
+  </div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 4:</span> Experience is the Best Teacher</h3>
+  <p>Learn, create, experience, and let the failure teach you. Be the option to change where you were wrong.</p>
+
+  <div class="key-concept">Mistakes will bring profit over time.</div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 5:</span> Candlesticks and Timeframes</h3>
+
+  <div class="diagram-container">
+    <svg width="350" height="280" viewBox="0 0 350 280">
+      <!-- Large candlestick with labels -->
+      <line x1="175" y1="20" x2="175" y2="70" stroke="#1a73e8" stroke-width="3"/>
+      <rect x="140" y="70" width="70" height="130" fill="#1a73e8" rx="3" opacity="0.9"/>
+      <line x1="175" y1="200" x2="175" y2="250" stroke="#1a73e8" stroke-width="3"/>
+
+      <!-- Arrows and labels -->
+      <line x1="120" y1="20" x2="135" y2="20" stroke="#888" stroke-width="1"/>
+      <text x="115" y="24" text-anchor="end" font-size="13" fill="#333" font-weight="600">High</text>
+
+      <line x1="120" y1="70" x2="135" y2="70" stroke="#888" stroke-width="1"/>
+      <text x="115" y="74" text-anchor="end" font-size="13" fill="#333" font-weight="600">Close</text>
+
+      <line x1="120" y1="200" x2="135" y2="200" stroke="#888" stroke-width="1"/>
+      <text x="115" y="204" text-anchor="end" font-size="13" fill="#333" font-weight="600">Open</text>
+
+      <line x1="120" y1="250" x2="135" y2="250" stroke="#888" stroke-width="1"/>
+      <text x="115" y="254" text-anchor="end" font-size="13" fill="#333" font-weight="600">Low</text>
+
+      <!-- Right side labels -->
+      <text x="225" y="45" font-size="11" fill="#aaa">Candle Wick</text>
+      <text x="225" y="140" font-size="11" fill="#aaa">Candle Body</text>
+      <text x="225" y="225" font-size="11" fill="#aaa">Candle Wick</text>
+
+      <!-- Bracket for body -->
+      <line x1="215" y1="75" x2="220" y2="75" stroke="#aaa" stroke-width="1"/>
+      <line x1="220" y1="75" x2="220" y2="195" stroke="#aaa" stroke-width="1"/>
+      <line x1="215" y1="195" x2="220" y2="195" stroke="#aaa" stroke-width="1"/>
+    </svg>
+    <div class="diagram-label">Candle body shows where price opened and where price closed</div>
+  </div>
+
+  <div class="tip-box">
+    <div class="tip-label">Timeframes</div>
+    If I am on a 15-minute timeframe, each candle represents what it achieved within that 15-minute time span.
+  </div>
+</div>
+
+<!-- DON'T CHANGE PAGE -->
+<div class="page">
+  <div style="text-align:center; margin-bottom:30px;">
+    <h2 style="font-size:36px; color:#0d47a1; font-weight:800;">DON'T CHANGE</h2>
+    <div style="width:60px;height:3px;background:#1a73e8;margin:15px auto;"></div>
+  </div>
+
+  <p style="font-size:16px; margin-bottom:20px; color:#555;">The to-do list. The only one that matters.</p>
+
+  <ul class="checklist">
+    <li>Learn a strategy</li>
+    <li>Don't change it</li>
+    <li>Do it forever</li>
+    <li>Trade until you get good</li>
+    <li>Manage your risk</li>
+    <li>Don't be a dumbass</li>
+    <li>Don't over trade</li>
+    <li>Don't over leverage</li>
+    <li>Don't have multiple mentors</li>
+    <li>Don't over think it</li>
+    <li>Just execute your strategy</li>
+  </ul>
+</div>
+
+<!-- DAY 3 -->
+<div class="page">
+  <div class="day-header">Day 3</div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 6:</span> Highs, Lows, and Trends</h3>
+  <p><strong>Goal:</strong> Identify higher highs and lower lows. Green then red, red then green pattern.</p>
+
+  <p>The market moves in 3 different ways:</p>
+
+  <!-- Trend diagrams -->
+  <div class="diagram-container">
+    <svg width="500" height="200" viewBox="0 0 500 200">
+      <!-- Uptrend -->
+      <text x="80" y="15" text-anchor="middle" font-size="13" fill="#1a73e8" font-weight="700">UPTREND</text>
+      <polyline points="20,170 50,120 70,140 100,80 120,110 150,50 170,75" fill="none" stroke="#1a73e8" stroke-width="2.5"/>
+      <text x="155" y="45" font-size="9" fill="#888">HH</text>
+      <text x="125" y="120" font-size="9" fill="#888">HL</text>
+      <text x="105" y="75" font-size="9" fill="#888">HH</text>
+      <text x="75" y="150" font-size="9" fill="#888">HL</text>
+
+      <!-- Downtrend -->
+      <text x="270" y="15" text-anchor="middle" font-size="13" fill="#d32f2f" font-weight="700">DOWNTREND</text>
+      <polyline points="210,50 240,100 260,80 290,140 310,110 340,170 360,150" fill="none" stroke="#d32f2f" stroke-width="2.5"/>
+      <text x="245" y="108" font-size="9" fill="#888">LH</text>
+      <text x="265" y="75" font-size="9" fill="#888">LH</text>
+      <text x="295" y="148" font-size="9" fill="#888">LL</text>
+      <text x="315" y="105" font-size="9" fill="#888">LH</text>
+
+      <!-- Consolidation -->
+      <text x="445" y="15" text-anchor="middle" font-size="13" fill="#888" font-weight="700">CONSOLIDATION</text>
+      <polyline points="400,100 420,70 435,110 450,75 465,105 480,80 495,95" fill="none" stroke="#888" stroke-width="2.5"/>
+      <line x1="395" y1="70" x2="500" y2="70" stroke="#ddd" stroke-width="1" stroke-dasharray="4"/>
+      <line x1="395" y1="110" x2="500" y2="110" stroke="#ddd" stroke-width="1" stroke-dasharray="4"/>
+    </svg>
+    <div class="diagram-label">Three types of market movement: Higher Highs/Higher Lows, Lower Highs/Lower Lows, Sideways</div>
+  </div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 7:</span> Break of Structure</h3>
+  <p>If a trend is broken, e.g. the highest low gets past by a candle, it's called a <strong>break of structure (BOS)</strong>.</p>
+
+  <div class="diagram-container">
+    <svg width="400" height="200" viewBox="0 0 400 200">
+      <!-- Uptrend then break -->
+      <polyline points="30,170 70,110 90,140 130,70 150,100 190,40 210,70" fill="none" stroke="#1a73e8" stroke-width="2"/>
+      <!-- Break line -->
+      <line x1="90" y1="140" x2="350" y2="140" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="5,5"/>
+      <text x="355" y="143" font-size="10" fill="#d32f2f">Previous HL</text>
+      <!-- Break candle -->
+      <polyline points="210,70 240,120 260,90 290,160" fill="none" stroke="#d32f2f" stroke-width="2.5"/>
+      <!-- BOS label -->
+      <text x="275" y="155" font-size="12" fill="#d32f2f" font-weight="700">BOS</text>
+      <line x1="265" y1="145" x2="290" y2="160" stroke="#d32f2f" stroke-width="1"/>
+    </svg>
+    <div class="diagram-label">Break of Structure: when price breaks below the previous higher low</div>
+  </div>
+
+  <div class="tip-box">
+    <div class="tip-label">Tip</div>
+    If there are many candles the same colour all in a row, see them as one candle. Break of structure happens often. They happen with every trend.
+  </div>
+</div>
+
+<!-- LIQUIDITY -->
+<div class="page">
+  <h3 class="lesson"><span class="lesson-num">Lesson 8:</span> Liquidity Part 1</h3>
+
+  <div class="highlight-box">
+    <strong>What is Liquidity?</strong><br>
+    Testing orders. It exists on every timeframe. It is required for the market to move and change direction. It acts like a magnet. Where price wants to go = charging towards liquidity.
+  </div>
+
+  <p><strong>Why do we need it?</strong> It determines where we are going towards and it is required for the market to move and change direction.</p>
+
+  <p>Liquidity is where lots of orders get filled close to highs. Lots of orders that get stopped out. They got trapped at a price, mostly higher or lower. People who are chasing the market need to be on the right side.</p>
+
+  <div class="diagram-container">
+    <svg width="400" height="220" viewBox="0 0 400 220">
+      <!-- Price action going up -->
+      <polyline points="30,180 60,140 80,160 110,100 130,130 160,70 180,95" fill="none" stroke="#1a73e8" stroke-width="2"/>
+      <!-- Liquidity level -->
+      <line x1="140" y1="70" x2="300" y2="70" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="4"/>
+      <text x="305" y="73" font-size="10" fill="#d32f2f">Liquidity (stop losses)</text>
+      <!-- Sweep -->
+      <polyline points="180,95 220,55 240,65" fill="none" stroke="#d32f2f" stroke-width="2.5"/>
+      <!-- Reversal -->
+      <polyline points="240,65 260,110 280,90 310,160 330,140 360,190" fill="none" stroke="#1a73e8" stroke-width="2" opacity="0.6"/>
+      <!-- Label -->
+      <text x="225" y="45" font-size="11" fill="#d32f2f" font-weight="600">Sweep</text>
+      <text x="300" y="195" font-size="11" fill="#1a73e8">Reversal after sweep</text>
+    </svg>
+    <div class="diagram-label">Liquidity sweep: price takes out stops above highs, then reverses</div>
+  </div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 8 (continued):</span> Liquidity for Downtrends</h3>
+  <p>Some things good for downtrends: possibility that people are going to be shorting and placing stops below lows. The reasons we choose to fill all the orders is where we see the structure.</p>
+  <p>Got low going, got swept out, shows it was good enough to go long in the opposite direction. Strong buy signal, showing it is going to be moving to the upside.</p>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 9:</span> Liquidity Part 2</h3>
+  <p>Same concept from the sell side perspective. Liquidity rests above highs (buy side) and below lows (sell side).</p>
+</div>
+
+<!-- DAY 4 -->
+<div class="page">
+  <div class="day-header">Day 4</div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 10:</span> Order Blocks</h3>
+  <p><strong>Definition:</strong> A price range where large orders were placed, causing the market to change direction.</p>
+
+  <div class="highlight-box">
+    <strong>Why do we want to use it?</strong><br>
+    If large smart money orders were able to be filled, there will be more orders, so we know price will likely react and move in the same direction as those orders. More orders filled = safe to assume it will continue.
+  </div>
+
+  <div class="diagram-container">
+    <svg width="400" height="220" viewBox="0 0 400 220">
+      <!-- Downtrend into OB -->
+      <polyline points="30,40 60,80 80,60 110,120 130,100 160,160" fill="none" stroke="#d32f2f" stroke-width="2"/>
+      <!-- Order block zone -->
+      <rect x="150" y="140" width="80" height="30" fill="#1a73e8" opacity="0.15" rx="3"/>
+      <rect x="150" y="140" width="80" height="30" fill="none" stroke="#1a73e8" stroke-width="1.5" stroke-dasharray="4" rx="3"/>
+      <text x="190" y="158" text-anchor="middle" font-size="10" fill="#1a73e8" font-weight="600">Order Block</text>
+      <!-- Reversal up -->
+      <polyline points="160,160 190,170 210,150 230,100 250,120 270,60 290,80 310,30" fill="none" stroke="#1a73e8" stroke-width="2.5"/>
+      <!-- Arrow -->
+      <text x="300" y="25" font-size="11" fill="#1a73e8" font-weight="600">Continuation</text>
+    </svg>
+    <div class="diagram-label">Order Block: price returns to zone where large orders were filled, then continues</div>
+  </div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 11:</span> Order Blocks Part 2</h3>
+  <p>Where do large orders get filled? Where liquidity rests. We know this by break of structure. Can be revisited in the opposite direction.</p>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 12:</span> Fair Value Gaps and Imbalances</h3>
+
+  <div class="highlight-box">
+    <strong>What are gaps and imbalances?</strong><br>
+    An imbalance of orders where the price surface of the market lacks orders in the opposite direction. It helps predict where the market wants to go.
+  </div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 13:</span> Gaps and Imbalances Part 2</h3>
+  <p><strong>Can be identified by 3 candles.</strong></p>
+
+  <div class="diagram-container">
+    <svg width="400" height="220" viewBox="0 0 400 220">
+      <!-- Candle 1 -->
+      <line x1="80" y1="160" x2="80" y2="120" stroke="#1a73e8" stroke-width="2"/>
+      <rect x="65" y="120" width="30" height="40" fill="#1a73e8" rx="2"/>
+      <line x1="80" y1="80" x2="80" y2="120" stroke="#1a73e8" stroke-width="2"/>
+      <text x="80" y="175" text-anchor="middle" font-size="10" fill="#888">Candle 1</text>
+
+      <!-- Candle 2 (big move) -->
+      <line x1="160" y1="70" x2="160" y2="40" stroke="#1a73e8" stroke-width="2"/>
+      <rect x="145" y="40" width="30" height="50" fill="#1a73e8" rx="2"/>
+      <line x1="160" y1="90" x2="160" y2="70" stroke="#1a73e8" stroke-width="2"/>
+      <text x="160" y="105" text-anchor="middle" font-size="10" fill="#888">Candle 2</text>
+
+      <!-- Candle 3 -->
+      <line x1="240" y1="55" x2="240" y2="25" stroke="#1a73e8" stroke-width="2"/>
+      <rect x="225" y="25" width="30" height="35" fill="#1a73e8" rx="2"/>
+      <line x1="240" y1="60" x2="240" y2="55" stroke="#1a73e8" stroke-width="2"/>
+      <text x="240" y="75" text-anchor="middle" font-size="10" fill="#888">Candle 3</text>
+
+      <!-- FVG zone -->
+      <rect x="100" y="60" width="140" height="20" fill="#1a73e8" opacity="0.1"/>
+      <line x1="100" y1="60" x2="240" y2="60" stroke="#1a73e8" stroke-width="1.5" stroke-dasharray="3"/>
+      <line x1="100" y1="80" x2="240" y2="80" stroke="#1a73e8" stroke-width="1.5" stroke-dasharray="3"/>
+      <text x="310" y="73" font-size="12" fill="#1a73e8" font-weight="700">FVG</text>
+      <text x="310" y="88" font-size="10" fill="#888">(Fair Value Gap)</text>
+
+      <!-- Arrow showing gap -->
+      <line x1="290" y1="73" x2="245" y2="73" stroke="#1a73e8" stroke-width="1" marker-end="url(#arrowBlue)"/>
+      <defs>
+        <marker id="arrowBlue" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1a73e8"/>
+        </marker>
+      </defs>
+    </svg>
+    <div class="diagram-label">Fair Value Gap: the gap between the wick of Candle 1 and the wick of Candle 3</div>
+  </div>
+
+  <div class="tip-box">
+    <div class="tip-label">What is NOT a Fair Value Gap</div>
+    When the wicks from the first and third candle meet in the body of the big candle. No gap = no FVG.
+  </div>
+</div>
+
+<!-- DAY 5 -->
+<div class="page">
+  <div class="day-header">Day 5</div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 12 (continued):</span> Balanced Price Action</h3>
+  <p>When price exceeds the FVG, this is disrespected. It is no longer valid. But if an FVG is respected, we can then use it to make a trade.</p>
+  <p>If we only have 3 imbalances/FVGs but only one gets filled, the price is no longer doing what it needs to balance. Price returned = no longer needs to balance out the imbalances.</p>
+
+  <div class="highlight-box">
+    <strong>When Confluence Doesn't Work:</strong>
+    <ul>
+      <li>New market opens (London session, New York session, Asian session)</li>
+      <li>Big NEWS event happens</li>
+    </ul>
+  </div>
+
+  <div class="key-concept">Once price balances out, there is no need for it to continue filling the other FVGs. Price is actually going to continue on its original trend.</div>
+</div>
+
+<!-- DAY 6 -->
+<div class="page">
+  <div class="day-header">Day 6</div>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 14:</span> Inverse Fair Value Gaps (IFVG)</h3>
+  <p>Notation on a fair value gap. If we see a confluence close to the entry, it can be a reason to take a trade. Use it as a sign for a potential trade setup. Don't use it as a standalone tool. Use it close to FVG.</p>
+  <p>When price breaks past a FVG, it becomes an inverse FVG. Safe to assume it will continue in its own trend.</p>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 15:</span> Balanced Price Action (BPR)</h3>
+  <p>Combining areas: fair value gaps to create imbalance in a predicted range. The part where the two FVGs cross over is what we are looking for.</p>
+
+  <div class="diagram-container">
+    <svg width="400" height="180" viewBox="0 0 400 180">
+      <!-- Two overlapping FVG zones -->
+      <rect x="80" y="40" width="150" height="50" fill="#1a73e8" opacity="0.15" rx="3"/>
+      <text x="155" y="35" text-anchor="middle" font-size="10" fill="#1a73e8">Bullish FVG</text>
+      <rect x="130" y="70" width="150" height="50" fill="#d32f2f" opacity="0.15" rx="3"/>
+      <text x="230" y="135" text-anchor="middle" font-size="10" fill="#d32f2f">Bearish FVG</text>
+      <!-- Overlap -->
+      <rect x="130" y="70" width="100" height="20" fill="#0d47a1" opacity="0.25" rx="2"/>
+      <text x="180" y="83" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="700">BPR Zone</text>
+      <!-- Arrow -->
+      <text x="300" y="83" font-size="11" fill="#0d47a1" font-weight="600">Entry Zone</text>
+    </svg>
+    <div class="diagram-label">Balanced Price Range: where bullish and bearish FVGs overlap. This is the entry zone.</div>
+  </div>
+
+  <p>Not a standalone reason to trade. Another confluence to follow. But using both FVGs (BPR) gives more confluence to buy or sell.</p>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 16:</span> Equilibrium Part 1</h3>
+  <p>It measures the point from swing high to swing low (or vice versa), identifying where price is in a premium and a discount. It identifies a premium and discounted price as continuation confluence.</p>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 17:</span> Equilibrium Part 2</h3>
+
+  <div class="diagram-container">
+    <svg width="350" height="250" viewBox="0 0 350 250">
+      <!-- Vertical range -->
+      <line x1="175" y1="30" x2="175" y2="230" stroke="#0d47a1" stroke-width="2"/>
+      <!-- High/Low labels -->
+      <text x="175" y="20" text-anchor="middle" font-size="12" fill="#333" font-weight="700">HIGH</text>
+      <text x="175" y="245" text-anchor="middle" font-size="12" fill="#333" font-weight="700">LOW</text>
+      <!-- EQ line -->
+      <line x1="120" y1="130" x2="230" y2="130" stroke="#1a73e8" stroke-width="2" stroke-dasharray="6"/>
+      <text x="240" y="134" font-size="12" fill="#1a73e8" font-weight="700">0.5 (EQ)</text>
+      <!-- Premium zone -->
+      <rect x="130" y="30" width="90" height="100" fill="#d32f2f" opacity="0.08" rx="4"/>
+      <text x="175" y="80" text-anchor="middle" font-size="13" fill="#d32f2f" font-weight="600">PREMIUM</text>
+      <text x="175" y="95" text-anchor="middle" font-size="10" fill="#d32f2f">Selling Zone</text>
+      <!-- Discount zone -->
+      <rect x="130" y="130" width="90" height="100" fill="#1a73e8" opacity="0.08" rx="4"/>
+      <text x="175" y="180" text-anchor="middle" font-size="13" fill="#1a73e8" font-weight="600">DISCOUNT</text>
+      <text x="175" y="195" text-anchor="middle" font-size="10" fill="#1a73e8">Buying Zone</text>
+    </svg>
+    <div class="diagram-label">Equilibrium: if buying power comes out of the discount zone, assume continuation up</div>
+  </div>
+</div>
+
+<!-- BREAKER BLOCKS & SMT -->
+<div class="page">
+  <h3 class="lesson"><span class="lesson-num">Lesson 18:</span> Breaker Blocks Part 1</h3>
+  <p><strong>Definition:</strong> A structure opposite of the current trend, which creates a price range with buy/sell orders depending on the previous trend.</p>
+  <p>If price revisits that area, we can assume that if there is selling/buying pressure out of it, price will continue in that direction due to the lack of orders from the previous trend.</p>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 19:</span> Breaker Blocks Part 2</h3>
+  <p>Daily breaker blocks = lack of buy orders on the other side.</p>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 20:</span> SMT Divergence</h3>
+  <p><strong>First step to find the bias for the day.</strong> Is it bullish or bearish?</p>
+  <p>When one index is forcing what another is going to do. NQ and ES. NQ follows about 90% of the time.</p>
+
+  <div class="highlight-box">
+    <strong>What to Look For:</strong>
+    <ul>
+      <li><strong>Bullish:</strong> Higher low formed on one index and a lower low on the other</li>
+      <li><strong>Bearish:</strong> High formed on one and a higher high on the other</li>
+    </ul>
+  </div>
+
+  <div class="diagram-container">
+    <svg width="450" height="200" viewBox="0 0 450 200">
+      <!-- Bullish SMT -->
+      <text x="110" y="15" text-anchor="middle" font-size="13" fill="#1a73e8" font-weight="700">BULLISH SMT</text>
+      <!-- ES line -->
+      <polyline points="30,60 70,100 110,80 150,120" fill="none" stroke="#1a73e8" stroke-width="2"/>
+      <text x="155" y="135" font-size="10" fill="#1a73e8">ES: Higher Low</text>
+      <!-- NQ line -->
+      <polyline points="30,50 70,110 110,70 150,140" fill="none" stroke="#d32f2f" stroke-width="2"/>
+      <text x="155" y="155" font-size="10" fill="#d32f2f">NQ: Lower Low</text>
+      <!-- Circle divergence -->
+      <circle cx="150" cy="130" r="20" fill="none" stroke="#0d47a1" stroke-width="1.5" stroke-dasharray="3"/>
+
+      <!-- Bearish SMT -->
+      <text x="340" y="15" text-anchor="middle" font-size="13" fill="#d32f2f" font-weight="700">BEARISH SMT</text>
+      <!-- ES line -->
+      <polyline points="260,140 300,80 340,100 380,60" fill="none" stroke="#1a73e8" stroke-width="2"/>
+      <text x="385" y="55" font-size="10" fill="#1a73e8">ES: Higher High</text>
+      <!-- NQ line -->
+      <polyline points="260,130 300,70 340,110 380,80" fill="none" stroke="#d32f2f" stroke-width="2"/>
+      <text x="385" y="85" font-size="10" fill="#d32f2f">NQ: Lower High</text>
+      <!-- Circle -->
+      <circle cx="380" cy="70" r="20" fill="none" stroke="#0d47a1" stroke-width="1.5" stroke-dasharray="3"/>
+    </svg>
+    <div class="diagram-label">SMT Divergence: when ES and NQ make different structures at the same point</div>
+  </div>
+
+  <div class="tip-box">
+    <div class="tip-label">Key Rule</div>
+    Look for SMT Divergences on either the 5 minute or the 15 minute chart. If we see one market go down or up and it confirms, we then know the bias for the rest of the market.
+  </div>
+</div>
+
+<!-- STRATEGY CREATION -->
+<div class="page section-divider">
+  <h2>Strategy Creation</h2>
+  <div class="blue-line"></div>
+  <p class="section-sub">Building Your Edge</p>
+</div>
+
+<div class="page">
+  <h3 class="lesson"><span class="lesson-num">Lesson 21:</span> How to Build a Strategy</h3>
+  <p>TJR spoke about what was coming. Introduction to the strategy creation process.</p>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 22:</span> Strategy Creation Part 1</h3>
+
+  <div class="step-box"><div class="step-num">1</div><div>Read the 1 hour and the 4 hour chart</div></div>
+  <div class="step-box"><div class="step-num">2</div><div>Look at bias on the 1 hour. Look at the trend.</div></div>
+  <div class="step-box"><div class="step-num">3</div><div>Goes to 1 hour. Is it bullish trend? If so, when looking down the trend, the 5 minute trend may be the opposite.</div></div>
+  <div class="step-box"><div class="step-num">4</div><div>Look at the 1 hour timeframe, we can execute on the 5 minute timeframe.</div></div>
+  <div class="step-box"><div class="step-num">5</div><div>5 minutes goes over the range. More stops = higher timeframe.</div></div>
+
+  <h3 class="lesson">Execution Points</h3>
+  <ul>
+    <li>A big sweep on 1 hour or 4 hour</li>
+    <li>Entry, break of structure on 5 minute, depending on the end</li>
+    <li>1 hour tells us the market is bullish</li>
+    <li>When liquidity found, look for areas on the 1 hour. Then scale down to 5 min or 15 min to find entries</li>
+  </ul>
+
+  <h3 class="lesson">Execution Checklist</h3>
+  <p>If we are bullish on the 1 hour but bearish on the lower timeframe:</p>
+  <ol style="margin-left:25px;">
+    <li>Still look for lows on the 5 minute, find break of structure</li>
+    <li>Look for where, then look for confluence</li>
+    <li>Once both have happened, wait for confluence</li>
+    <li>Looking for either an order block, FVG, breaker block, or equilibrium</li>
+    <li>We need to see buying pressure / selling pressure in order to execute</li>
+    <li>Once you see pressure cycle, execute</li>
+  </ol>
+
+  <h3 class="lesson"><span class="lesson-num">Lesson 23:</span> Strategy Creation Part 2</h3>
+  <div class="key-concept">First things first: we only trade New York session.</div>
+</div>
+
+<!-- THE BLUEPRINT SECTION -->
+<div class="page section-divider">
+  <h2>The Blueprint</h2>
+  <div class="blue-line"></div>
+  <p class="section-sub">Tools. Intro to Trading Tools.</p>
+</div>
+
+<!-- GOALS -->
+<div class="page">
+  <h2 style="font-size:28px; color:#0d47a1; margin-bottom:25px; font-weight:700;">Long Term Goals</h2>
+
+  <div class="goal-card"><div class="goal-num">1</div><div class="goal-text">I want to be able to live off the profits I make from trading</div></div>
+  <div class="goal-card"><div class="goal-num">2</div><div class="goal-text">I want to buy my first house before the age of 25, just like he bought his</div></div>
+  <div class="goal-card"><div class="goal-num">3</div><div class="goal-text">I want some sense of freedom</div></div>
+  <div class="goal-card"><div class="goal-num">4</div><div class="goal-text">I want to reach a point in my life where I look back and say what I have done, and I'm proud of what I have self done</div></div>
+  <div class="goal-card"><div class="goal-num">5</div><div class="goal-text">Unrealistic but receivable: I want to take delivery of my dream car. An AMG, a Brabus W206, or a Tesla with custom package</div></div>
+
+  <h2 style="font-size:28px; color:#0d47a1; margin-bottom:25px; margin-top:40px; font-weight:700;">Short Term Goals</h2>
+
+  <div class="goal-card"><div class="goal-num">1</div><div class="goal-text">I want to get my first payout</div></div>
+  <div class="goal-card"><div class="goal-num">2</div><div class="goal-text">I want to consistently journal all my trades, whether they are paper trades or funded trades</div></div>
+  <div class="goal-card"><div class="goal-num">3</div><div class="goal-text">I want to create a consistent routine I can do every day that will not only benefit my trading but also my life</div></div>
+  <div class="goal-card"><div class="goal-num">4</div><div class="goal-text">I want to make sure I back test all my new strategies, using real live trades</div></div>
+  <div class="goal-card"><div class="goal-num">5</div><div class="goal-text">Completing as many modules I can each day</div></div>
+  <div class="goal-card"><div class="goal-num">6</div><div class="goal-text">To practice things like discipline. I want to go to the gym 3 days per week.</div></div>
+</div>
+
+<!-- 3 KEYS -->
+<div class="page">
+  <h2 style="font-size:28px; color:#0d47a1; margin-bottom:25px; font-weight:700;">3 Keys I Need to Become Profitable</h2>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; margin-top:20px;">
+    <div style="background:#e8f0fe; padding:30px 20px; border-radius:10px; text-align:center;">
+      <div style="font-size:36px; color:#0d47a1; font-weight:800;">1</div>
+      <div style="font-size:16px; color:#0d47a1; font-weight:700; margin-top:10px;">Psychology</div>
+    </div>
+    <div style="background:#e8f0fe; padding:30px 20px; border-radius:10px; text-align:center;">
+      <div style="font-size:36px; color:#0d47a1; font-weight:800;">2</div>
+      <div style="font-size:16px; color:#0d47a1; font-weight:700; margin-top:10px;">Risk Management</div>
+    </div>
+    <div style="background:#e8f0fe; padding:30px 20px; border-radius:10px; text-align:center;">
+      <div style="font-size:36px; color:#0d47a1; font-weight:800;">3</div>
+      <div style="font-size:16px; color:#0d47a1; font-weight:700; margin-top:10px;">Confluences &amp; Strategy</div>
+    </div>
+  </div>
+
+  <p style="margin-top:30px;">Plus: How to accurately predict price action.</p>
+</div>
+
+<!-- PSYCHOLOGY SECTION -->
+<div class="page section-divider">
+  <h2>Psychology</h2>
+  <div class="blue-line"></div>
+  <p class="section-sub">The Mindset Behind the Trades</p>
+</div>
+
+<div class="page">
+  <div class="day-header">Day 7: Psychology</div>
+
+  <h3 class="lesson">What is Psychology?</h3>
+  <ul>
+    <li>The mindset you have when approaching trading, business, life</li>
+    <li>The way problems arise and how you think about them</li>
+    <li>The way you either emotionally react, or with ease, or with no problem</li>
+  </ul>
+
+  <h3 class="lesson">Why Do We Need Psychology?</h3>
+  <ul>
+    <li>If we approach trading the wrong way, we are going into it with the wrong results</li>
+    <li>Being good at trading means being able to predict price action with high probability</li>
+    <li>If we think about problems the wrong way, we get a result we do not want</li>
+    <li>If we act emotionally or off of instinct, we will get a different result than the one we desired</li>
+  </ul>
+
+  <div class="key-concept">Psychology is the driver of action. If you think the wrong way, you will act the wrong way. If you think the right way, you will act the right way.</div>
+
+  <h3 class="lesson">Understanding Psychology</h3>
+  <p>There is only two ways to approach it:</p>
+  <ol style="margin-left:25px;">
+    <li>Do what you are supposed to because you know that it will produce the desired result</li>
+    <li>Just do what you are supposed to, to get a wanted result</li>
+  </ol>
+  <p style="margin-top:15px;"><strong>Manifestation:</strong> Act on what you think.</p>
+
+  <h3 class="lesson">Shiny Object Syndrome</h3>
+  <ul>
+    <li>Focus more on what you should NOT be doing, rather than what you should do</li>
+    <li>Reverse think: from end result, and back in time through actions to the start</li>
+    <li>Go from start to beginning, rather than getting overwhelmed</li>
+  </ul>
+
+  <div class="quote-block">
+    The second you make money is like a feeling. By focusing on things I should be doing, I can remove them, and I will make me a better trader. I will make more profit over time.
+  </div>
+</div>
+
+<div class="page">
+  <h3 class="lesson">Psychology Part 2: Review</h3>
+  <ul>
+    <li>Psychology is the mindset you have when approaching trading, business, life</li>
+    <li>The way you think about failure and risk: the way they arise, and the way you act</li>
+    <li>We need psychology in order to do actions that provide us with the desired results</li>
+    <li>We must know how to think. By controlling how we think, we subconsciously control how we act</li>
+  </ul>
+
+  <h3 class="lesson">Thinking Long Term</h3>
+  <p>How long do you want trading to change your life? Fine. Doesn't matter. All I want is success, and that doesn't happen in an instant.</p>
+  <p>If you want trading to change your life, it won't happen easily. You must want to <strong>master</strong> it. Notice the wording: "trading, I want to master." There is no timeline for when you will be ready. Which is why we need practice.</p>
+
+  <h3 class="lesson">Applying It</h3>
+  <ul>
+    <li>If you love trading so much to the point where you can do it forever, you will be successful without making a dollar</li>
+    <li>Treat it like a game and get really good at it</li>
+    <li>Stop putting time/money restrictions on what should be enjoyable</li>
+    <li>Become obsessed with winning trades, not making money</li>
+    <li>Become obsessed with improving</li>
+  </ul>
+
+  <div class="highlight-box">
+    <strong>Start with something easier:</strong> A bad habit that you have been wanting to kick but haven't had the balls to do it. If you can do this, you can switch how you think about trading.
+  </div>
+
+  <p><strong>Do something even easier:</strong> Do nothing for 30 minutes in silence in the dark. Understand love and patience.</p>
+
+  <h3 class="lesson">Effort = Results</h3>
+  <p>The time and effort you put in = results out. If you put nothing in, you'll just waste money and time. You will make your money back. Skills take 10,000 hours to master.</p>
+
+  <div class="highlight-box">
+    <strong>Have fun.</strong> If you are not having fun, it's not for you. If trading sounds fun, that sounds like you can work in the market forever.
+  </div>
+
+  <div class="quote-block">
+    "Mistakes are the best things that will happen to you, as long as you never repeat them."
+  </div>
+</div>
+
+<!-- RISK MANAGEMENT -->
+<div class="page section-divider">
+  <h2>Risk Management</h2>
+  <div class="blue-line"></div>
+  <p class="section-sub">Staying in the Game</p>
+</div>
+
+<div class="page">
+  <div class="day-header">Day 8: Risk Management</div>
+
+  <div class="key-concept">Risk is a skill.</div>
+
+  <h3 class="lesson">What is Risk Management?</h3>
+  <p>How can we manage our risk in the market to trade forever. Not following your strategy and win rate, and your risk/reward. Managing Risk = Reward.</p>
+
+  <h3 class="lesson">Understanding Your Risk Tolerance</h3>
+  <p>It's going to be different to everyone else's. I may only be able to risk 5% of my funds, whereas a profitable trader may be able to risk 50%. It's okay. They have a higher win rate/accuracy on trades.</p>
+  <p>If I am risking 5%, but I get emotional with that amount of money, I need to lower my amount of risk to help benefit my reward.</p>
+
+  <h3 class="lesson">Why We Need Risk Management</h3>
+  <p>Do we really want to buy, to get set back, to lose everything? NO!</p>
+  <p>Think: we are playing Minecraft and we spent 2 years grinding, and then we die doing something stupid. Why would we do it all over again? So why restart and risk all in trading with real money?</p>
+
+  <div class="highlight-box">
+    <strong>It helps us play the game. It is necessary for you to get good at the game.</strong>
+  </div>
+
+  <p>Risk is a skill. You suck at it right now, but will get better with time and development. It's not as simple as "1%". Developing a risk plan and strategy is important. Don't overlook it because it's part of our BIG 3 in trading.</p>
+
+  <h3 class="lesson">Homework: Start a Trading Journal</h3>
+  <ul>
+    <li>What caused you to enter?</li>
+    <li>What was the bias?</li>
+    <li>Confluences used?</li>
+    <li>What RR did I use?</li>
+    <li>How much was risked?</li>
+    <li>Was it a winning trade or losing trade?</li>
+  </ul>
+  <p>We will find out your risk tolerance over time.</p>
+</div>
+
+<!-- CONFLUENCES & STRATEGY DEEP DIVE -->
+<div class="page section-divider">
+  <h2>Confluences &amp; Strategy</h2>
+  <div class="blue-line"></div>
+  <p class="section-sub">The Complete System</p>
+</div>
+
+<div class="page">
+  <h3 class="lesson">Trading with Confluences</h3>
+
+  <p><strong>What are confluences?</strong> Reasons for why price is going to move in the markets. Liquidity, imbalances, and orders getting filled. Can happen everywhere on the charts, in every timeframe.</p>
+
+  <div class="conf-grid">
+    <div class="conf-item">Liquidity</div>
+    <div class="conf-item">Imbalances / FVG</div>
+    <div class="conf-item">Balanced Price Range</div>
+    <div class="conf-item">Equilibrium</div>
+    <div class="conf-item">IFVG</div>
+    <div class="conf-item">FVG</div>
+    <div class="conf-item">Order &amp; Breaker Blocks</div>
+    <div class="conf-item">SMT Divergence</div>
+    <div class="conf-item" style="grid-column: span 2;">Bias</div>
+  </div>
+
+  <h3 class="lesson">Reasons to Execute a Trade</h3>
+  <ul>
+    <li>High probability reason for your desired price action to happen</li>
+    <li>With good risk management and RR</li>
+    <li>If you do not have either of these, do not make the trade</li>
+  </ul>
+
+  <div class="key-concept">Psychology is the ONLY reason why people should not take a trade. You should NEVER emotionally take or not take a trade.</div>
+
+  <h3 class="lesson">Price is Fractal</h3>
+  <p>The candles on any timeframe can be copied. What happens on the 1 hour happens on the 5 minute. Just depends on what timeframes you want to act on.</p>
+
+  <h3 class="lesson">Personalise Your Strategy</h3>
+  <ul>
+    <li>If a confluence doesn't make sense, don't use it</li>
+    <li>If win rate decreases using it, stop using it</li>
+    <li>Use confluences that work and make sense</li>
+    <li>Build your own strategy off of all confluences</li>
+  </ul>
+
+  <div class="highlight-box">
+    <strong>Don't Over Analyse.</strong> Don't stop thinking "I am a genius" while implementing everything and the kitchen sink. Sometimes simpler the better. Remember KISS: Keep It Simple Stupid.
+  </div>
+
+  <h3 class="lesson">What I Should Be Looking For Daily</h3>
+  <ul>
+    <li>How you can find the bias, what timeframes, what confluences</li>
+    <li>How you execute</li>
+    <li>What timeframes and what confluences cause you to execute the trade</li>
+    <li>How to exit: what timeframes and confluences cause you to exit trades for either profit or loss</li>
+  </ul>
+</div>
+
+<!-- DETAILED CONFLUENCES -->
+<div class="page">
+  <h3 class="lesson">Liquidity (Detailed)</h3>
+
+  <p><strong>Buy Orders:</strong> In an uptrend, there are 2 types of buyers:</p>
+  <ol style="margin-left:25px;">
+    <li>Someone who took a short, got stopped out, and is now trying to buy back</li>
+    <li>Someone who is entering a trade above the previous high</li>
+  </ol>
+
+  <p><strong>Sell Orders:</strong> Same thing. Those that rest below lows.</p>
+
+  <h3 class="lesson">The Market Makers (AKA "The Devils")</h3>
+  <ul>
+    <li>They have a massive amount of capital</li>
+    <li>With a lot of capital, they can't enter with a million dollar order in one direction</li>
+    <li>To buy a share, someone has to be willing to sell it</li>
+    <li><strong>This is why we get liquidity sweeps</strong></li>
+  </ul>
+
+  <h3 class="lesson">Imbalances / FVG (Detailed)</h3>
+  <ul>
+    <li>Imbalances and FVGs are a 3-candle stick pattern</li>
+    <li>It shows a lack of orders within the market</li>
+    <li>Due to the lack of sell orders, the market is going to want to revisit that area, then pushing the market back up even higher</li>
+  </ul>
+
+  <h3 class="lesson">Balanced Price Action (Detailed)</h3>
+  <p>When price exceeds the FVG, it is disrespected. No longer valid. If we only have 3 FVGs but only one gets filled, price is no longer doing what it needs to balance.</p>
+  <p>Think of balanced out price action almost as a shield.</p>
+</div>
+
+<!-- IFVG, BOS, ORDER BLOCKS DETAILED -->
+<div class="page">
+  <h3 class="lesson">IFVG (Detailed)</h3>
+  <p>An IFVG is basically like an FVG, but when the FVG gets disrespected. It can be used as an indicator. IFVG works really well with, or after BOS and IFVG: both show the same thing, disrespect of order flow.</p>
+  <p><strong>Multiple FVGs:</strong> If there are more than 1 FVG, one is disrespected but the second one is respected, this is not an IFVG for the second one. For it to be multiple FVGs, all must be disrespected.</p>
+  <p>When price disrespects an FVG with multiple FVGs, we end the shortest FVG, unless in the creation of the IFVG, there was a retracement back into the imbalance, balancing that price range out.</p>
+
+  <h3 class="lesson">Break of Structure (Detailed)</h3>
+  <p>Need to be able to identify on highs and lows:</p>
+  <ul>
+    <li><strong>High:</strong> an up candle and a down candle</li>
+    <li><strong>Low:</strong> a down candle and an up candle</li>
+  </ul>
+  <p>To find break of structure: find what must have marked out the highs and lows, find the point where price has exceeded past our previous lows (if bullish), telling us it wants to go in the opposite direction.</p>
+
+  <h3 class="lesson">Order Blocks (Detailed)</h3>
+  <p>Order blocks and breaker blocks are very similar. They are pretty much the opposite of each other. Don't get confused by them. <strong>KISS: Keep It Simple.</strong></p>
+  <p>An order block is a price concept where a significant amount of orders were placed. It is one formed when the market sweeps on liquidity, ending or causing a break of structure.</p>
+
+  <h3 class="lesson">3 Things to Look For in an Order Block</h3>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+    <div style="background:#e8f0fe; padding:20px; border-radius:8px; text-align:center; font-weight:700; color:#0d47a1;">1. Liquidity Sweep</div>
+    <div style="background:#e8f0fe; padding:20px; border-radius:8px; text-align:center; font-weight:700; color:#0d47a1;">2. Break of Structure</div>
+    <div style="background:#e8f0fe; padding:20px; border-radius:8px; text-align:center; font-weight:700; color:#0d47a1;">3. Order Block</div>
+  </div>
+
+  <h3 class="lesson">What is a Breaker Block?</h3>
+  <p>It is the leading up prior to the liquidity sweep. It is the price action right before the sweep of liquidity.</p>
+</div>
+
+<!-- SMT, FIBONACCI, DRAWS ON LIQUIDITY -->
+<div class="page">
+  <h3 class="lesson">SMT Divergence (Detailed)</h3>
+  <p>It is basically a way to tell the true direction of the market. ES follows New York highs, but NQ 90% of the time follows that buy.</p>
+
+  <h3 class="lesson">Order Flow</h3>
+  <p>If we are in an uptrend and we see people who buy levels, and we see an FVG, that is a really good clue to where the market works.</p>
+  <p><strong>Steps:</strong> FVG getting disrespected (IFVG), then look for continuation of new order flow.</p>
+
+  <h3 class="lesson">Fibonacci Extension</h3>
+  <p>It is a confluence that can be used interchangeably with IFVG or break of structure. Not a serious confluence, just a bit of extra knowledge. Tyler uses it as a point to see a break of structure, to see where price is going to bounce.</p>
+
+  <div class="tip-box">
+    <div class="tip-label">Note</div>
+    IFVG and BOS take priority over Fibonacci. TJR doesn't really recommend to use this.
+  </div>
+
+  <h3 class="lesson">Draws on Liquidity and Key Levels</h3>
+
+  <p><strong>2 Different Types of Liquidity:</strong></p>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin:15px 0;">
+    <div style="background:#e8f0fe; padding:20px; border-radius:8px;">
+      <strong style="color:#0d47a1;">High Resistance Liquidity</strong>
+      <p style="margin-top:8px; font-size:13px;">A high or a low that has already been swept. Liquidity taken. Harder to take out because it's more resistance.</p>
+    </div>
+    <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid #e0e0e0;">
+      <strong style="color:#333;">Low Resistance Liquidity</strong>
+      <p style="margin-top:8px; font-size:13px;">A group of highs or lows that hasn't been broken out yet. Also known as trendline liquidity. Basically just a trend of highs or lows.</p>
+    </div>
+  </div>
+
+  <p>Price is more likely to take the low resistance liquidity and continue with its current order flow. Low resistance is easier to take out.</p>
+
+  <h3 class="lesson">Most Important Draws on Liquidity</h3>
+  <ul>
+    <li>Session Highs and Lows</li>
+    <li>Previous Day Highs and Lows</li>
+    <li>Asia Highs and Lows</li>
+  </ul>
+  <p>Because we trade in New York session, we use and look for London highs and lows, and Asian highs and lows as our draw on liquidity.</p>
+
+  <table class="time-table">
+    <tr><th>Session</th><th>Hours (EST)</th></tr>
+    <tr><td>Asia Highs &amp; Lows</td><td>8:00pm - 3:00am</td></tr>
+    <tr><td>London Highs &amp; Lows</td><td>3:00am - 8:30am</td></tr>
+    <tr><td>New York (at previous day H&amp;L)</td><td>8:30am onwards</td></tr>
+  </table>
+
+  <div class="tip-box">
+    <div class="tip-label">Important</div>
+    Data Highs and Lows are essentially price changes coming off of high impact news/data. Don't trade high impact news days.
+  </div>
+</div>
+
+<!-- FINDING DAILY BIAS -->
+<div class="page">
+  <h3 class="lesson">Finding Daily Bias: The 3 Situations</h3>
+
+  <div style="display:grid; grid-template-columns:1fr; gap:15px; margin:15px 0;">
+    <div style="background:#e8f0fe; padding:20px; border-radius:8px; border-left:4px solid #1a73e8;">
+      <strong style="color:#0d47a1; font-size:16px;">Situation 1: London Manipulation, New York Reversal</strong>
+      <p style="margin-top:8px;">London takes out previous day highs or lows at around 8:30 hrs, and we start seeing a reversal of that in New York session. New York then starts aiming for key levels like London lows, Previous Day lows, and/or higher timeframe imbalances.</p>
+    </div>
+    <div style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0d47a1;">
+      <strong style="color:#0d47a1; font-size:16px;">Situation 2: London Reversal, New York Continuation</strong>
+      <p style="margin-top:8px;">When London session takes previous day highs and starts to reverse before going into New York. New York continues in the direction London reversed to, taking out low resistance liquidity and previous day lows.</p>
+    </div>
+    <div style="background:#e8f0fe; padding:20px; border-radius:8px; border-left:4px solid #1a73e8;">
+      <strong style="color:#0d47a1; font-size:16px;">Situation 3: London Consolidation, New York Manipulation/Extension</strong>
+      <p style="margin-top:8px;">London consolidates, then when New York session opens, we get a manipulation taking out a previous day low or high. Then target/look for the reversal, or previous day highs/Asia lows. This includes the Asia session influence.</p>
+    </div>
+  </div>
+
+  <h3 class="lesson">Key Levels for All Situations</h3>
+  <ul>
+    <li>London Lows</li>
+    <li>Previous Day Highs</li>
+    <li>Asia Lows</li>
+    <li>Previous Day Lows</li>
+  </ul>
+  <p>When trying to find these, look on the 1hr timeframe.</p>
+</div>
+
+<!-- KILLZONES & MACROS -->
+<div class="page">
+  <h3 class="lesson">Killzones and Macro Timeframes</h3>
+
+  <p><strong>Killzones</strong> are highly efficient market hours. Sections of time that price will be actively seeking imbalances or liquidity. Always before every single hour and after every single hour.</p>
+
+  <table class="time-table">
+    <tr><th>Killzone</th><th>Time (EST)</th></tr>
+    <tr><td>London</td><td>2:00am - 5:00am</td></tr>
+    <tr><td>New York</td><td>8:30am - 11:00am</td></tr>
+    <tr><td>Power Hour</td><td>2:00pm - 3:00pm</td></tr>
+  </table>
+
+  <h3 class="lesson">Macro Time Frames</h3>
+
+  <table class="time-table">
+    <tr><th>Macro</th><th>Time (EST)</th><th>Notes</th></tr>
+    <tr><td>Pre-Market</td><td>8:30am - 9:10am</td><td></td></tr>
+    <tr><td>AM Macro</td><td>9:50am - 10:10am</td><td style="color:#d32f2f; font-weight:600;">The Manipulation Window</td></tr>
+    <tr><td>Mid-Market</td><td>10:50am - 11:10am</td><td>Lunchtime</td></tr>
+    <tr><td>PM Macro</td><td>1:10pm - 1:40pm</td><td></td></tr>
+    <tr><td>Last Hour</td><td>2:50pm - 3:10pm</td><td></td></tr>
+  </table>
+
+  <div class="key-concept">The 9:50-10:10 timeframe is known as the manipulations. It is actively and frequently rotating, finding imbalances, and filling liquidity. This gives direction points.</div>
+
+  <h3 class="lesson">Equilibrium (Detailed)</h3>
+  <p>Helps us identify the premium and discounted price from swing highs to swing lows. There are 2 lots of internal liquidity found within the equilibrium.</p>
+  <p>If I see on the 1 hour timeframe that we have already found equilibrium, I would be looking for either longs or shorts depending on which direction price is going to become discounted. Also going to FVGs to find internal liquidity.</p>
+
+  <h3 class="lesson">What is Invalidation of EQ?</h3>
+  <p>If price pushes past either the high or the low of the EQ, we are no longer looking for that discounted price range.</p>
+
+  <h3 class="lesson">2 Ways to Use EQ</h3>
+  <ol style="margin-left:25px;">
+    <li><strong>TJR method:</strong> When looking for EQ, use it on the previous high and low. Good, but doesn't catch the whole move.</li>
+    <li><strong>Eyesonly method:</strong> Use it to find the highest point of the full move, the highest point of the push down, and the lowest.</li>
+  </ol>
+</div>
+
+<!-- STOP LOSSES -->
+<div class="page">
+  <h3 class="lesson">Stop Losses and Take Profits</h3>
+
+  <h3 class="lesson">Stop Losses</h3>
+  <p>Placed where our trade idea is invalidated and/or FVG is disrespected.</p>
+  <ul>
+    <li>If taking a stop off a FVG: place stop loss on the candle's wick at the top or at the bottom of the first candle's wick, depending on order flow</li>
+    <li><strong>Break of Structure Stop Loss:</strong> If we have taken a trade at equilibrium, place stop loss at a spot that would be a higher low or break of structure point</li>
+  </ul>
+
+  <h3 class="lesson">My Strategy (Summary)</h3>
+
+  <div class="step-box"><div class="step-num">1</div><div>Find daily bias on 1hr or 4hr</div></div>
+  <div class="step-box"><div class="step-num">2</div><div>Plus: confirmation about the bias. Find 3 confluences that support the trade</div></div>
+  <div class="step-box"><div class="step-num">3</div><div>Bias, Equilibrium, SMT Divergence, and more</div></div>
+  <div class="step-box"><div class="step-num">4</div><div>Find key level price is aiming for</div></div>
+  <div class="step-box"><div class="step-num">5</div><div>Set as TP and also set SL on previous lows</div></div>
+</div>
+
+<!-- STRATEGY EXPLAINED -->
+<div class="page">
+  <h3 class="lesson">Strategy Explained: Full Walkthrough</h3>
+
+  <h3 class="lesson">Part 1: Day Bias</h3>
+  <ul>
+    <li>Find key levels (session highs/lows, etc.)</li>
+    <li>Figure out what scenario we are in: London Manipulation, Reversal, New York Continuation, Consolidation, New York Manipulation/Extension</li>
+    <li>Wait for key levels to be hit already, for 5 minutes</li>
+    <li>Watch for where it gets disrespected and those new candles in our direction</li>
+    <li>Direction is via FVG disrespect</li>
+    <li>Scale down to 1 min, look for order disrespect and continue in our direction</li>
+    <li>Find an entry point, if there is one</li>
+  </ul>
+
+  <h3 class="lesson">Tips for Using This Strategy</h3>
+
+  <div class="step-box"><div class="step-num">1</div><div>Take whatever trade gives you the best RR, and the best confluence</div></div>
+  <div class="step-box"><div class="step-num">2</div><div>Don't take trades on confirmation confluences that don't hit equilibrium</div></div>
+  <div class="step-box"><div class="step-num">3</div><div>Do not take trades once our key levels have been hit and once our TP have been hit</div></div>
+  <div class="step-box"><div class="step-num">4</div><div>Wait for 10am EST high impact news</div></div>
+  <div class="step-box"><div class="step-num">5</div><div>Don't trade till after 9:50 Macro!!!</div></div>
+
+  <h3 class="lesson">Part 2: Step by Step Execution</h3>
+
+  <div class="step-box"><div class="step-num">1</div><div>Start on 1hr, look at the bias. If nothing, don't look the 4hr.</div></div>
+  <div class="step-box"><div class="step-num">2</div><div>Once the bias is found, move down to the 5 minute. Look for continuation, then look for confirmation/confluences to respect our bias.</div></div>
+  <div class="step-box"><div class="step-num">3</div><div>Narrow down to 1 minute, looking for entry points using FVG, IFVG.</div></div>
+  <div class="step-box"><div class="step-num">4</div><div>Go price action doing. Starting to disrespect the 5 min FVG? Stay on the 5 min FVG.</div></div>
+  <div class="step-box"><div class="step-num">5</div><div>If the confluence that follows our bias doesn't follow on 1 min, that means no trade. No rushes.</div></div>
+</div>
+
+<!-- NOTES AND TEACHINGS -->
+<div class="page section-divider">
+  <h2>Notes &amp; Teachings</h2>
+  <div class="blue-line"></div>
+  <p class="section-sub">Extra Knowledge</p>
+</div>
+
+<div class="page">
+  <h3 class="lesson">NDOG / NWOG (New Day / New Week Opening Gaps)</h3>
+  <p><strong>New Day Opening Gap and New Week Opening Gap:</strong> Opening gaps are the strongest draws on liquidity in the marketplace.</p>
+  <p><strong>New Week Opening Gap:</strong> Close of previous week and open of the next week.</p>
+  <p><strong>New Day Opening Gap:</strong> Same thing, between days not weeks.</p>
+
+  <div class="highlight-box">
+    FVG is a strong confluence because price has only been traded in one direction. Opening gaps are when they haven't been traded in any direction. It just makes sense to trade on these gaps.
+  </div>
+
+  <h3 class="lesson">FVG Tips</h3>
+  <ol style="margin-left:25px;">
+    <li>Wait for FVG at a key level. Wait for price to re-enter it. If it starts to push back, it is a signal to enter.</li>
+    <li>FVG at key level, then starts truly, price increases. It raises to lots of sideways, good. If bearish FVG: looking for longs. If bullish FVG: looking for shorts.</li>
+  </ol>
+
+  <h3 class="lesson">Finding Patterns</h3>
+  <ul>
+    <li>Imbalances by discount and premium</li>
+    <li>Liquidity (high to low)</li>
+    <li>Don't enter too early, sense of positive, it is true</li>
+    <li>Not all draws on liquidity will get hit</li>
+    <li>We are going to read your narrative draw on higher timeframe</li>
+  </ul>
+
+  <h3 class="lesson">Trading Hours</h3>
+  <ul>
+    <li><strong>9:30 Market Open:</strong> If you see an opportunity, take it, as long as you're certain it will work</li>
+    <li><strong>9:50 - 10:10 Macros:</strong> Best time for trades because the first 20 min of market open is manipulation</li>
+  </ul>
+
+  <h3 class="lesson">New Ideas</h3>
+  <ul>
+    <li>News calendar of all currencies</li>
+    <li>AI chatbot, a way to connect prop firm accounts</li>
+  </ul>
+</div>
+
+<!-- PRACTICE TRADING -->
+<div class="page">
+  <h3 class="lesson">Practice Trading Log</h3>
+
+  <div style="background:#e8f0fe; border-radius:10px; padding:25px; margin:15px 0;">
+    <h4 style="color:#0d47a1; font-size:18px; margin-bottom:15px;">Day 1</h4>
+    <ul>
+      <li>Did an amazing trade. Noticing a bearish wedge, hitting my TP, making <strong>$116</strong>.</li>
+      <li>Did an amazing trade. Bearish wedge, lifting my TP.</li>
+      <li>Did an amazing trade.</li>
+      <li>First 20 min: pure manipulation.</li>
+      <li><strong>RR: 1:2.5</strong></li>
+    </ul>
+  </div>
+</div>
+
+<!-- GOALS 2026-2027 -->
+<div class="page" style="display:flex; flex-direction:column; justify-content:center;">
+  <h2 style="font-size:36px; color:#0d47a1; font-weight:800; text-align:center; margin-bottom:40px;">Goals for 2026-2027</h2>
+  <div style="width:60px; height:3px; background:#1a73e8; margin:0 auto 40px auto;"></div>
+
+  <div class="goal-card"><div class="goal-num">1</div><div class="goal-text">Buy 1290s for your birthday</div></div>
+  <div class="goal-card"><div class="goal-num">2</div><div class="goal-text">Get a funded account in 2026</div></div>
+  <div class="goal-card"><div class="goal-num">3</div><div class="goal-text">Make my first profits</div></div>
+  <div class="goal-card"><div class="goal-num">4</div><div class="goal-text">First Payout</div></div>
+  <div class="goal-card"><div class="goal-num">5</div><div class="goal-text">2027: Meet TJR</div></div>
+  <div class="goal-card"><div class="goal-num">6</div><div class="goal-text">Leave 80:1 accuracy on trades</div></div>
+
+  <div class="key-concept" style="margin-top:40px;">This is the beginning. Two years from now, look back at this page.</div>
+</div>
+
+<!-- END PAGE -->
+<div class="page" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+  <div class="cover-line"></div>
+  <h2 style="font-size:42px; color:#0d47a1; font-weight:800; letter-spacing:4px;">BANJO TRADES</h2>
+  <p style="font-size:16px; color:#888; letter-spacing:2px; margin-top:15px;">THE BLUEPRINT</p>
+  <div class="cover-line"></div>
+</div>
+
+</body>
+</html>

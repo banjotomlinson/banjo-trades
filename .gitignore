@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env
+.env.local
+.DS_Store
+*.log
+
+# Large image assets (local only, not tracked in git)
+core-documents/book-images/
