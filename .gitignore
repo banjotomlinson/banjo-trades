@@ -5,5 +5,6 @@ node_modules/
 .DS_Store
 *.log
 
-# Large image assets (local only, not tracked in git)
-core-documents/book-images/
+# Local docs and assets (not tracked in git)
+core-documents/
+migration-plan.md
