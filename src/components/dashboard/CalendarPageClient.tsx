@@ -23,7 +23,11 @@ export default function CalendarPageClient({
         onCategoryChange={setActiveCategory}
         onViewChange={setActiveView}
       />
-      <EconomicCalendar initialEvents={initialEvents} />
+      <EconomicCalendar
+        initialEvents={initialEvents}
+        view={activeView}
+        category={activeCategory}
+      />
     </>
   );
 }

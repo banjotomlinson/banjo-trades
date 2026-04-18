@@ -5,6 +5,12 @@ import type { CalendarEvent } from "@/lib/data";
 
 type ViewMode = "daily" | "weekly" | "monthly";
 type ImpactFilter = "all" | "high" | "medium" | "low";
+type CategoryKey =
+  | "indices"
+  | "futures"
+  | "commodities"
+  | "crypto"
+  | "forex";
 
 const IMPACT_COLORS: Record<string, string> = {
   high: "bg-danger",
@@ -19,21 +25,44 @@ const IMPACT_PILL_ACTIVE: Record<string, string> = {
   low: "bg-[#475569] text-white",
 };
 
+// Which currencies each category cares about.
+// Non-forex categories are USD-driven; forex sees every major pair.
+const CATEGORY_CURRENCIES: Record<CategoryKey, string[] | "all"> = {
+  indices: ["US", "USD"],
+  futures: ["US", "USD"],
+  commodities: ["US", "USD"],
+  crypto: ["US", "USD"],
+  forex: "all",
+};
+
 interface EconomicCalendarProps {
   initialEvents?: CalendarEvent[];
+  view?: ViewMode;
+  category?: CategoryKey;
 }
 
 export default function EconomicCalendar({
   initialEvents,
+  view: viewProp,
+  category,
 }: EconomicCalendarProps) {
   const hasInitial = initialEvents && initialEvents.length > 0;
   const [events, setEvents] = useState<CalendarEvent[]>(
     hasInitial ? initialEvents : []
   );
-  const [view, setView] = useState<ViewMode>("daily");
+  const [internalView, setInternalView] = useState<ViewMode>("daily");
+  const view = viewProp ?? internalView;
+  const viewControlled = viewProp !== undefined;
   const [filter, setFilter] = useState<ImpactFilter>("high");
   const [loading, setLoading] = useState(!hasInitial);
   const [dateOffset, setDateOffset] = useState(0);
+
+  const currencyAllow = category ? CATEGORY_CURRENCIES[category] : ["US", "USD"];
+  const matchesCategory = useCallback(
+    (country: string) =>
+      currencyAllow === "all" ? true : currencyAllow.includes(country),
+    [currencyAllow]
+  );
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -60,17 +89,51 @@ export default function EconomicCalendar({
   const baseDate = new Date();
   baseDate.setDate(baseDate.getDate() + dateOffset);
 
+  // Build [start, end) window based on the active view.
+  const rangeStart = new Date(baseDate);
+  const rangeEnd = new Date(baseDate);
+  if (view === "daily") {
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd.setHours(24, 0, 0, 0);
+  } else if (view === "weekly") {
+    // ISO week: Monday 00:00 → next Monday 00:00
+    const dow = rangeStart.getDay(); // 0=Sun
+    const mondayOffset = dow === 0 ? -6 : 1 - dow;
+    rangeStart.setDate(rangeStart.getDate() + mondayOffset);
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd.setTime(rangeStart.getTime());
+    rangeEnd.setDate(rangeEnd.getDate() + 7);
+  } else {
+    rangeStart.setDate(1);
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd.setTime(rangeStart.getTime());
+    rangeEnd.setMonth(rangeEnd.getMonth() + 1);
+  }
+
   const filtered = events.filter((e) => {
     if (filter !== "all" && e.impact !== filter) return false;
-    if (e.country !== "US" && e.country !== "USD") return false;
+    if (!matchesCategory(e.country)) return false;
+    const t = new Date(e.date).getTime();
+    if (t < rangeStart.getTime() || t >= rangeEnd.getTime()) return false;
     return true;
   });
 
-  const dateLabel = baseDate.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
+  const dateLabel =
+    view === "daily"
+      ? baseDate.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "short",
+          day: "numeric",
+        })
+      : view === "weekly"
+      ? `Week of ${rangeStart.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })}`
+      : baseDate.toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        });
 
   return (
     <div className="bg-panel border border-border rounded-xl overflow-hidden">
@@ -78,21 +141,23 @@ export default function EconomicCalendar({
         <h2 className="text-base font-semibold text-[#f1f5f9]">
           Economic Calendar
         </h2>
-        <div className="flex gap-1 bg-background rounded-lg p-1 border border-border">
-          {(["daily", "weekly", "monthly"] as ViewMode[]).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                view === v
-                  ? "bg-accent text-white"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              {v.charAt(0).toUpperCase() + v.slice(1)}
-            </button>
-          ))}
-        </div>
+        {!viewControlled && (
+          <div className="flex gap-1 bg-background rounded-lg p-1 border border-border">
+            {(["daily", "weekly", "monthly"] as ViewMode[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setInternalView(v)}
+                className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  view === v
+                    ? "bg-accent text-white"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 px-5 py-3 border-b border-border flex-wrap">
@@ -109,11 +174,11 @@ export default function EconomicCalendar({
             {f.charAt(0).toUpperCase() + f.slice(1)}
             {f !== "all" && (
               <span className="ml-1.5 opacity-70">
-                {events.filter(
-                  (e) =>
-                    e.impact === f &&
-                    (e.country === "US" || e.country === "USD")
-                ).length}
+                {
+                  events.filter(
+                    (e) => e.impact === f && matchesCategory(e.country)
+                  ).length
+                }
               </span>
             )}
           </button>

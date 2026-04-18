@@ -72,11 +72,7 @@ export async function fetchCalendarEvents(): Promise<CalendarEvent[]> {
     const raw: ForexEvent[] = await res.json();
 
     return raw
-      .filter(
-        (e) =>
-          e.country === "USD" &&
-          ["High", "Medium", "Low"].includes(e.impact)
-      )
+      .filter((e) => ["High", "Medium", "Low"].includes(e.impact))
       .map((e) => ({
         title: e.title,
         country: e.country,
