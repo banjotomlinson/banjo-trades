@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 interface FinnhubCalendarEvent {
   country: string;
@@ -21,8 +21,8 @@ interface CalendarEvent {
   actual: string;
 }
 
-let cachedEvents: CalendarEvent[] = [];
-let lastFetch = 0;
+// Per-range cache so month navigation doesn't hammer Finnhub.
+const cache = new Map<string, { events: CalendarEvent[]; at: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
 function formatVal(v: number | string | null, unit: string): string {
@@ -31,35 +31,32 @@ function formatVal(v: number | string | null, unit: string): string {
   return unit ? `${s}${unit}` : s;
 }
 
-async function fetchFinnhub(): Promise<CalendarEvent[]> {
-  const now = Date.now();
-  if (cachedEvents.length > 0 && now - lastFetch < CACHE_TTL) {
-    return cachedEvents;
-  }
+function isValidDate(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+async function fetchFinnhub(
+  from: string,
+  to: string
+): Promise<CalendarEvent[]> {
+  const key = `${from}_${to}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return hit.events;
 
   const apiKey = process.env.FINNHUB_API_KEY;
-  if (!apiKey) return cachedEvents;
-
-  const today = new Date();
-  const from = new Date(today);
-  from.setDate(from.getDate() - 7);
-  const to = new Date(today);
-  to.setDate(to.getDate() + 45);
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  if (!apiKey) return hit?.events ?? [];
 
   try {
     const res = await fetch(
-      `https://finnhub.io/api/v1/calendar/economic?from=${iso(
-        from
-      )}&to=${iso(to)}&token=${apiKey}`,
+      `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${apiKey}`,
       { next: { revalidate: 300 } }
     );
-    if (!res.ok) return cachedEvents;
+    if (!res.ok) return hit?.events ?? [];
     const data: { economicCalendar?: FinnhubCalendarEvent[] } =
       await res.json();
     const raw = data.economicCalendar ?? [];
 
-    cachedEvents = raw
+    const events = raw
       .filter((e) => ["high", "medium", "low"].includes(e.impact))
       .map((e) => ({
         title: e.event,
@@ -72,14 +69,33 @@ async function fetchFinnhub(): Promise<CalendarEvent[]> {
         previous: formatVal(e.prev, e.unit),
         actual: formatVal(e.actual, e.unit),
       }));
-    lastFetch = now;
-    return cachedEvents;
+    cache.set(key, { events, at: Date.now() });
+    return events;
   } catch {
-    return cachedEvents;
+    return hit?.events ?? [];
   }
 }
 
-export async function GET() {
-  const events = await fetchFinnhub();
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const fromParam = searchParams.get("from");
+  const toParam = searchParams.get("to");
+
+  let from: string;
+  let to: string;
+  if (fromParam && toParam && isValidDate(fromParam) && isValidDate(toParam)) {
+    from = fromParam;
+    to = toParam;
+  } else {
+    const today = new Date();
+    const fromD = new Date(today);
+    fromD.setDate(fromD.getDate() - 7);
+    const toD = new Date(today);
+    toD.setDate(toD.getDate() + 45);
+    from = fromD.toISOString().slice(0, 10);
+    to = toD.toISOString().slice(0, 10);
+  }
+
+  const events = await fetchFinnhub(from, to);
   return NextResponse.json({ events });
 }

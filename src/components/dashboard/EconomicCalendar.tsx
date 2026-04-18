@@ -1,7 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/data";
+
+function ymd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Unique-enough key so re-fetched months can be merged without duplicates.
+function eventKey(e: CalendarEvent): string {
+  return `${e.date}|${e.country}|${e.impact}|${e.title}`;
+}
 
 type ViewMode = "daily" | "weekly" | "monthly";
 type ImpactFilter = "all" | "high" | "medium" | "low";
@@ -64,27 +76,45 @@ export default function EconomicCalendar({
     [currencyAllow]
   );
 
-  const fetchEvents = useCallback(async () => {
+  // Tracks which date-range keys have already been fetched this session so
+  // month navigation is idempotent and cheap.
+  const loadedRanges = useRef<Set<string>>(new Set());
+
+  const fetchRange = useCallback(async (from: string, to: string) => {
+    const key = `${from}_${to}`;
+    if (loadedRanges.current.has(key)) return;
+    loadedRanges.current.add(key);
     try {
-      const res = await fetch("/api/calendar");
-      if (res.ok) {
-        const data = await res.json();
-        setEvents(data.events || []);
-      }
+      const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const incoming: CalendarEvent[] = data.events || [];
+      // Merge into current events, deduped by (date|country|impact|title).
+      setEvents((prev) => {
+        const seen = new Map<string, CalendarEvent>();
+        for (const e of prev) seen.set(eventKey(e), e);
+        for (const e of incoming) seen.set(eventKey(e), e);
+        return Array.from(seen.values());
+      });
     } catch {
-      // fail silently
+      loadedRanges.current.delete(key); // allow retry on transient failure
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // Only fetch on mount if we had no initial data
+    // Only fetch default window on mount if we had no initial data
     if (!hasInitial) {
-      fetchEvents();
+      const today = new Date();
+      const from = new Date(today);
+      from.setDate(from.getDate() - 7);
+      const to = new Date(today);
+      to.setDate(to.getDate() + 45);
+      fetchRange(ymd(from), ymd(to));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchEvents]);
+  }, []);
 
   const baseDate = new Date();
   baseDate.setDate(baseDate.getDate() + dateOffset);
@@ -109,6 +139,36 @@ export default function EconomicCalendar({
     rangeEnd.setTime(rangeStart.getTime());
     rangeEnd.setMonth(rangeEnd.getMonth() + 1);
   }
+
+  // Whenever the visible range moves outside what's been loaded so far,
+  // pull the surrounding window so the user sees events for any month they
+  // scroll to. Monthly view uses the full 42-cell grid; daily/weekly pull
+  // a 2-week buffer around the visible slice.
+  const fetchKey = useMemo(() => {
+    if (view === "monthly") {
+      return `${rangeStart.getFullYear()}-${rangeStart.getMonth()}`;
+    }
+    return `${view}:${ymd(rangeStart)}`;
+  }, [view, rangeStart]);
+
+  useEffect(() => {
+    let from: Date;
+    let to: Date;
+    if (view === "monthly") {
+      from = new Date(rangeStart);
+      from.setDate(1);
+      from.setDate(from.getDate() - from.getDay()); // Sunday on/before 1st
+      to = new Date(from);
+      to.setDate(to.getDate() + 42);
+    } else {
+      from = new Date(rangeStart);
+      from.setDate(from.getDate() - 14);
+      to = new Date(rangeEnd);
+      to.setDate(to.getDate() + 14);
+    }
+    fetchRange(ymd(from), ymd(to));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchKey, fetchRange]);
 
   const filtered = events.filter((e) => {
     if (filter !== "all" && e.impact !== filter) return false;
