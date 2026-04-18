@@ -1,17 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface Trade {
+  id: string;
   date: string; // ISO date "YYYY-MM-DD"
   pnl: number;
+  note?: string;
 }
 
 interface PnLCalendarProps {
-  trades?: Trade[];
+  trades?: Trade[]; // if provided, disables local editing
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const STORAGE_KEY = "banjo-pnl-trades-v1";
 
 function ymd(d: Date): string {
   const y = d.getFullYear();
@@ -28,21 +31,44 @@ function formatCurrency(n: number): string {
   })}`;
 }
 
-// Demo seed — mirrors the TopStep screenshot for Apr 2026.
-// Replace via the `trades` prop once a real trades source is wired.
-const DEMO_TRADES: Trade[] = [
-  { date: "2026-04-07", pnl: 120.14 },
-  { date: "2026-04-07", pnl: 80.14 },
-  { date: "2026-04-14", pnl: 180.09 },
-  { date: "2026-04-17", pnl: 200.0 },
-  { date: "2026-04-17", pnl: 145.06 },
-];
+function makeId(): string {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
 
-export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) {
+export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
+  const controlled = tradesProp !== undefined;
   const today = new Date();
   const [cursor, setCursor] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
+  const [localTrades, setLocalTrades] = useState<Trade[]>([]);
+  const [editingDate, setEditingDate] = useState<string | null>(null);
+
+  // Load persisted trades on mount. SSR-safe: effect runs only in the browser.
+  useEffect(() => {
+    if (controlled) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Trade[];
+        if (Array.isArray(parsed)) setLocalTrades(parsed);
+      }
+    } catch {
+      // ignore corrupted storage
+    }
+  }, [controlled]);
+
+  // Persist whenever localTrades changes.
+  useEffect(() => {
+    if (controlled) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(localTrades));
+    } catch {
+      // quota or privacy mode — silently drop
+    }
+  }, [localTrades, controlled]);
+
+  const trades = controlled ? tradesProp! : localTrades;
 
   // Group trades by YYYY-MM-DD.
   const byDay = useMemo(() => {
@@ -59,7 +85,7 @@ export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) 
   // Build 6-row × 7-col grid starting on the Sunday on/before the 1st.
   const gridStart = new Date(cursor);
   gridStart.setDate(1);
-  gridStart.setDate(gridStart.getDate() - gridStart.getDay()); // back to Sunday
+  gridStart.setDate(gridStart.getDate() - gridStart.getDay());
 
   const cells: Date[] = [];
   for (let i = 0; i < 42; i++) {
@@ -68,9 +94,11 @@ export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) 
     cells.push(d);
   }
 
-  // Weekly totals keyed by the Saturday of each row.
   const weekTotals = useMemo(() => {
-    const out = new Map<string, { pnl: number; count: number; weekIdx: number }>();
+    const out = new Map<
+      string,
+      { pnl: number; count: number; weekIdx: number }
+    >();
     for (let row = 0; row < 6; row++) {
       let pnl = 0;
       let count = 0;
@@ -120,6 +148,20 @@ export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) 
       : monthlyPnl < 0
       ? "text-bear"
       : "text-foreground";
+
+  const dayTrades = editingDate
+    ? trades.filter((t) => t.date === editingDate)
+    : [];
+
+  function addTrade(date: string, pnl: number, note: string) {
+    setLocalTrades((prev) => [
+      ...prev,
+      { id: makeId(), date, pnl, note: note || undefined },
+    ]);
+  }
+  function removeTrade(id: string) {
+    setLocalTrades((prev) => prev.filter((t) => t.id !== id));
+  }
 
   return (
     <div className="bg-panel border border-border rounded-xl overflow-hidden">
@@ -177,7 +219,6 @@ export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) 
           const isSaturday = d.getDay() === 6;
           const weekInfo = isSaturday ? weekTotals.get(key) : undefined;
 
-          // Pick the color for any $ amount displayed.
           const pnlVal = isSaturday ? weekInfo?.pnl ?? 0 : entry?.pnl ?? 0;
           const amountColor =
             pnlVal > 0
@@ -186,7 +227,6 @@ export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) 
               ? "text-bear"
               : "text-muted";
 
-          // Background tint for profitable days (dark green wash).
           const tint =
             inMonth && entry && entry.pnl > 0
               ? "bg-[#052e16]/80"
@@ -194,11 +234,20 @@ export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) 
               ? "bg-[#450a0a]/60"
               : "";
 
+          const clickable = !controlled && inMonth;
+
           return (
-            <div
+            <button
               key={i}
-              className={`relative border-r border-b border-border/60 min-h-[96px] p-2 ${tint} ${
+              type="button"
+              onClick={clickable ? () => setEditingDate(key) : undefined}
+              disabled={!clickable}
+              className={`relative border-r border-b border-border/60 min-h-[96px] p-2 text-left ${tint} ${
                 !inMonth ? "opacity-30" : ""
+              } ${
+                clickable
+                  ? "cursor-pointer hover:bg-white/[0.03] transition-colors"
+                  : "cursor-default"
               }`}
             >
               <div className="flex items-center">
@@ -222,7 +271,8 @@ export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) 
                     {formatCurrency(weekInfo.pnl)}
                   </div>
                   <div className="text-[10px] text-muted">
-                    {weekInfo.count} {weekInfo.count === 1 ? "trade" : "trades"}
+                    {weekInfo.count}{" "}
+                    {weekInfo.count === 1 ? "trade" : "trades"}
                   </div>
                 </div>
               ) : entry && inMonth ? (
@@ -234,10 +284,172 @@ export default function PnLCalendar({ trades = DEMO_TRADES }: PnLCalendarProps) 
                     {entry.count} {entry.count === 1 ? "trade" : "trades"}
                   </div>
                 </div>
+              ) : clickable ? (
+                <div className="mt-2 text-center text-[10px] text-muted opacity-0 group-hover:opacity-100">
+                  + add
+                </div>
               ) : null}
-            </div>
+            </button>
           );
         })}
+      </div>
+
+      {editingDate && (
+        <TradeEditor
+          date={editingDate}
+          trades={dayTrades}
+          onAdd={(pnl, note) => addTrade(editingDate, pnl, note)}
+          onRemove={removeTrade}
+          onClose={() => setEditingDate(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function TradeEditor({
+  date,
+  trades,
+  onAdd,
+  onRemove,
+  onClose,
+}: {
+  date: string;
+  trades: Trade[];
+  onAdd: (pnl: number, note: string) => void;
+  onRemove: (id: string) => void;
+  onClose: () => void;
+}) {
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState("");
+
+  const dayLabel = new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const dayTotal = trades.reduce((s, t) => s + t.pnl, 0);
+  const totalColor =
+    dayTotal > 0 ? "text-bull" : dayTotal < 0 ? "text-bear" : "text-muted";
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const n = parseFloat(amount.replace(/[$,\s]/g, ""));
+    if (!Number.isFinite(n) || n === 0) {
+      setError("Enter a non-zero amount (use - for a loss).");
+      return;
+    }
+    onAdd(n, note.trim());
+    setAmount("");
+    setNote("");
+    setError("");
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+      onClick={onClose}
+    >
+      <div
+        className="bg-panel border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold text-foreground">
+              {dayLabel}
+            </div>
+            <div className={`text-lg font-bold ${totalColor}`}>
+              {formatCurrency(dayTotal)}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-md text-muted hover:text-white hover:bg-[#334155] transition-colors"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        {trades.length > 0 && (
+          <div className="max-h-48 overflow-y-auto border-b border-border">
+            {trades.map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center justify-between px-5 py-2.5 border-b border-border/40 last:border-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={`text-sm font-bold ${
+                      t.pnl >= 0 ? "text-bull" : "text-bear"
+                    }`}
+                  >
+                    {formatCurrency(t.pnl)}
+                  </div>
+                  {t.note && (
+                    <div className="text-xs text-muted truncate">{t.note}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => onRemove(t.id)}
+                  className="text-muted hover:text-bear transition-colors text-lg px-2"
+                  aria-label="Delete trade"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={submit} className="p-5 space-y-3">
+          <div>
+            <label className="block text-xs text-muted font-semibold mb-1">
+              Amount (use negative for losses)
+            </label>
+            <input
+              type="text"
+              inputMode="decimal"
+              autoFocus
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="e.g. 228.28 or -75.50"
+              className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-muted font-semibold mb-1">
+              Note (optional)
+            </label>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="NQ long, ORB setup, etc."
+              className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+            />
+          </div>
+          {error && <div className="text-xs text-bear">{error}</div>}
+          <div className="flex gap-2 pt-1">
+            <button
+              type="submit"
+              className="flex-1 bg-accent text-white px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-all"
+            >
+              Add trade
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-md text-sm font-semibold border border-border text-muted hover:text-white hover:border-muted transition-all"
+            >
+              Done
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
