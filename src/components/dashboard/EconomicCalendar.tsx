@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/data";
+import { biasForEvent, summarizeDay, type Bias } from "@/lib/eventBias";
 
 function ymd(d: Date): string {
   const y = d.getFullYear();
@@ -302,41 +303,56 @@ export default function EconomicCalendar({
                 <th className="text-left px-3 py-2.5">Event</th>
                 <th className="text-right px-3 py-2.5">Forecast</th>
                 <th className="text-right px-3 py-2.5">Previous</th>
-                <th className="text-right px-5 py-2.5">Actual</th>
+                <th className="text-right px-3 py-2.5">Actual</th>
+                <th className="text-right px-5 py-2.5">Bias</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((event, i) => (
-                <tr
-                  key={i}
-                  className="border-b border-border/50 hover:bg-white/[0.02] transition-colors"
-                >
-                  <td className="px-5 py-3">
-                    <span
-                      className={`inline-block w-2.5 h-2.5 rounded-full ${
-                        IMPACT_COLORS[event.impact]
-                      }`}
-                    />
-                  </td>
-                  <td className="px-3 py-3 text-muted whitespace-nowrap">
-                    {new Date(event.date).toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
-                  </td>
-                  <td className="px-3 py-3 font-medium">{event.title}</td>
-                  <td className="px-3 py-3 text-right text-muted">
-                    {event.forecast || "-"}
-                  </td>
-                  <td className="px-3 py-3 text-right text-muted">
-                    {event.previous || "-"}
-                  </td>
-                  <td className="px-5 py-3 text-right font-semibold">
-                    {event.actual || "-"}
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((event, i) => {
+                const eb = biasForEvent(event);
+                return (
+                  <tr
+                    key={i}
+                    className="border-b border-border/50 hover:bg-white/[0.02] transition-colors"
+                    title={eb.watchFor}
+                  >
+                    <td className="px-5 py-3">
+                      <span
+                        className={`inline-block w-2.5 h-2.5 rounded-full ${
+                          IMPACT_COLORS[event.impact]
+                        }`}
+                      />
+                    </td>
+                    <td className="px-3 py-3 text-muted whitespace-nowrap">
+                      {new Date(event.date).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </td>
+                    <td className="px-3 py-3 font-medium">{event.title}</td>
+                    <td className="px-3 py-3 text-right text-muted">
+                      {event.forecast || "-"}
+                    </td>
+                    <td className="px-3 py-3 text-right text-muted">
+                      {event.previous || "-"}
+                    </td>
+                    <td className="px-3 py-3 text-right font-semibold">
+                      {event.actual || "-"}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <span
+                        className={`inline-flex items-center gap-1 text-xs font-semibold ${BIAS_STYLE[eb.bias].text}`}
+                      >
+                        <span
+                          className={`inline-block w-1.5 h-1.5 rounded-full ${BIAS_STYLE[eb.bias].dot}`}
+                        />
+                        {BIAS_STYLE[eb.bias].label}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
               </tbody>
             </table>
           )}
@@ -353,6 +369,13 @@ const DOT_COLOR: Record<string, string> = {
 };
 
 const WEEKDAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const BIAS_STYLE: Record<Bias, { dot: string; text: string; label: string }> = {
+  bullish: { dot: "bg-bull", text: "text-bull", label: "Bullish" },
+  bearish: { dot: "bg-bear", text: "text-bear", label: "Bearish" },
+  mixed: { dot: "bg-warning", text: "text-warning", label: "Mixed" },
+  neutral: { dot: "bg-muted", text: "text-muted", label: "Neutral" },
+};
 
 function MonthGrid({
   monthStart,
@@ -423,11 +446,17 @@ function MonthGrid({
         const dayEvents = byDay.get(key) ?? [];
         const inMonth = d.getMonth() === monthStart.getMonth();
         const isToday = key === todayKey;
+        const hasEvents = dayEvents.length > 0 && inMonth;
+        const summary = hasEvents ? summarizeDay(dayEvents) : null;
+        // Tooltip flips to the right half when the cell is in the left
+        // columns so it doesn't clip off-screen.
+        const col = i % 7;
+        const tipSide = col >= 4 ? "right-0" : "left-0";
 
         return (
           <div
             key={i}
-            className={`relative border-r border-b border-border/60 min-h-[110px] p-2 ${
+            className={`group relative border-r border-b border-border/60 min-h-[110px] p-2 ${
               !inMonth ? "opacity-30" : ""
             }`}
           >
@@ -441,9 +470,15 @@ function MonthGrid({
                   {d.getDate()}
                 </span>
               )}
-              {dayEvents.length > 0 && inMonth && (
-                <span className="text-[10px] text-muted">
-                  {dayEvents.length}
+              {summary && (
+                <span
+                  className={`inline-flex items-center gap-1 text-[10px] font-semibold ${BIAS_STYLE[summary.bias].text}`}
+                  title={summary.label}
+                >
+                  <span
+                    className={`inline-block w-1.5 h-1.5 rounded-full ${BIAS_STYLE[summary.bias].dot}`}
+                  />
+                  {BIAS_STYLE[summary.bias].label}
                 </span>
               )}
             </div>
@@ -452,11 +487,6 @@ function MonthGrid({
               {dayEvents.slice(0, 3).map((e, idx) => (
                 <div
                   key={idx}
-                  title={`${new Date(e.date).toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })} — ${e.country} ${e.title}`}
                   className="flex items-center gap-1.5 text-[11px] leading-tight"
                 >
                   <span
@@ -475,6 +505,78 @@ function MonthGrid({
                 </div>
               )}
             </div>
+
+            {hasEvents && (
+              <div
+                className={`pointer-events-none absolute top-full mt-1 ${tipSide} w-[320px] z-50 opacity-0 group-hover:opacity-100 transition-opacity bg-panel border border-border rounded-lg shadow-xl p-3 text-left`}
+              >
+                <div className="flex items-center justify-between mb-2 pb-2 border-b border-border">
+                  <div className="text-xs font-semibold text-foreground">
+                    {d.toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </div>
+                  {summary && (
+                    <span
+                      className={`inline-flex items-center gap-1 text-[11px] font-semibold ${BIAS_STYLE[summary.bias].text}`}
+                    >
+                      <span
+                        className={`inline-block w-1.5 h-1.5 rounded-full ${BIAS_STYLE[summary.bias].dot}`}
+                      />
+                      {summary.label}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-2 max-h-[260px] overflow-y-auto">
+                  {dayEvents.map((e, idx) => {
+                    const eb = biasForEvent(e);
+                    return (
+                      <div key={idx} className="text-[11px]">
+                        <div className="flex items-start gap-1.5">
+                          <span
+                            className={`inline-block w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${DOT_COLOR[e.impact]}`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted">
+                                {new Date(e.date).toLocaleTimeString("en-US", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })}
+                              </span>
+                              <span className="text-muted">{e.country}</span>
+                            </div>
+                            <div className="text-foreground font-medium leading-tight">
+                              {e.title}
+                            </div>
+                            {(e.forecast || e.previous || e.actual) && (
+                              <div className="text-muted mt-0.5">
+                                {e.actual && (
+                                  <span>Actual: <span className="text-foreground font-semibold">{e.actual}</span> · </span>
+                                )}
+                                {e.forecast && <span>Fcst: {e.forecast} · </span>}
+                                {e.previous && <span>Prev: {e.previous}</span>}
+                              </div>
+                            )}
+                            <div
+                              className={`mt-0.5 font-semibold ${BIAS_STYLE[eb.bias].text}`}
+                            >
+                              {eb.label}
+                            </div>
+                            <div className="text-muted leading-snug">
+                              {eb.watchFor}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
