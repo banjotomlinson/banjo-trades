@@ -4,7 +4,6 @@ import TradingViewChart from "@/components/dashboard/TradingViewChart";
 import CountdownBar from "@/components/dashboard/CountdownBar";
 import MarketsSnapshot from "@/components/dashboard/MarketsSnapshot";
 import SessionLevels from "@/components/dashboard/SessionLevels";
-import SignalTabs from "@/components/dashboard/SignalTabs";
 
 export default function Dashboard() {
   return (
@@ -20,7 +19,6 @@ export default function Dashboard() {
       <CountdownBar />
       <MarketsSnapshot />
       <SessionLevels />
-      <SignalTabs />
     </div>
   );
 }

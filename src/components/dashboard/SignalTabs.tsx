@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 // ── Signal category definitions (matches SIGNAL_CATS from monolith) ──
 const SIGNAL_CATEGORIES = [
   { key: "indices", label: "Indices", color: "#3b82f6" },
@@ -23,36 +21,18 @@ const VIEW_TABS = [
 export type ViewTab = (typeof VIEW_TABS)[number]["key"];
 
 interface SignalTabsProps {
-  /** Fires when the signal category changes (Indices, Futures, etc.) */
-  onCategoryChange?: (category: SignalCategory) => void;
-  /** Fires when the view tab changes (Daily, Weekly, Monthly) */
-  onViewChange?: (view: ViewTab) => void;
-  /** Initial active category */
-  defaultCategory?: SignalCategory;
-  /** Initial active view */
-  defaultView?: ViewTab;
+  activeCategory: SignalCategory;
+  activeView: ViewTab;
+  onCategoryChange: (category: SignalCategory) => void;
+  onViewChange: (view: ViewTab) => void;
 }
 
 export default function SignalTabs({
+  activeCategory,
+  activeView,
   onCategoryChange,
   onViewChange,
-  defaultCategory = "indices",
-  defaultView = "daily",
 }: SignalTabsProps) {
-  const [activeCategory, setActiveCategory] =
-    useState<SignalCategory>(defaultCategory);
-  const [activeView, setActiveView] = useState<ViewTab>(defaultView);
-
-  function handleCategoryClick(key: SignalCategory) {
-    setActiveCategory(key);
-    onCategoryChange?.(key);
-  }
-
-  function handleViewClick(key: ViewTab) {
-    setActiveView(key);
-    onViewChange?.(key);
-  }
-
   return (
     <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-5">
       {/* Signal category bar */}
@@ -62,7 +42,7 @@ export default function SignalTabs({
           return (
             <button
               key={cat.key}
-              onClick={() => handleCategoryClick(cat.key)}
+              onClick={() => onCategoryChange(cat.key)}
               className="rounded-lg px-[18px] py-1.5 text-xs font-bold tracking-wide transition-all duration-150 border"
               style={{
                 background: isActive ? cat.color : "transparent",
@@ -99,7 +79,7 @@ export default function SignalTabs({
           return (
             <button
               key={tab.key}
-              onClick={() => handleViewClick(tab.key)}
+              onClick={() => onViewChange(tab.key)}
               className={`rounded-lg px-5 py-2 text-[13px] font-semibold transition-all duration-150 border-none ${
                 isActive
                   ? "bg-blue-500 text-white"
