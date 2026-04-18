@@ -448,10 +448,13 @@ function MonthGrid({
         const isToday = key === todayKey;
         const hasEvents = dayEvents.length > 0 && inMonth;
         const summary = hasEvents ? summarizeDay(dayEvents) : null;
-        // Tooltip flips to the right half when the cell is in the left
-        // columns so it doesn't clip off-screen.
+        // Flip the tooltip horizontally when the cell is in the right
+        // columns, and vertically when it's in the bottom rows, so it
+        // never clips off-screen.
         const col = i % 7;
+        const row = Math.floor(i / 7);
         const tipSide = col >= 4 ? "right-0" : "left-0";
+        const tipVert = row >= 3 ? "bottom-full mb-1" : "top-full mt-1";
 
         return (
           <div
@@ -508,7 +511,7 @@ function MonthGrid({
 
             {hasEvents && (
               <div
-                className={`pointer-events-none absolute top-full mt-1 ${tipSide} w-[320px] z-50 opacity-0 group-hover:opacity-100 transition-opacity bg-panel border border-border rounded-lg shadow-xl p-3 text-left`}
+                className={`pointer-events-none absolute ${tipVert} ${tipSide} w-[320px] z-50 opacity-0 group-hover:opacity-100 transition-opacity bg-panel border border-border rounded-lg shadow-xl p-3 text-left`}
               >
                 <div className="flex items-center justify-between mb-2 pb-2 border-b border-border">
                   <div className="text-xs font-semibold text-foreground">
