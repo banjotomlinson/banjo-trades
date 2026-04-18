@@ -188,7 +188,11 @@ export default function EconomicCalendar({
       <div className="flex items-center justify-between px-5 py-3 border-b border-border">
         <div className="flex gap-2 items-center">
           <button
-            onClick={() => setDateOffset((d) => d - 1)}
+            onClick={() =>
+              setDateOffset(
+                (d) => d - (view === "monthly" ? 30 : view === "weekly" ? 7 : 1)
+              )
+            }
             className="w-9 h-9 rounded-lg bg-[#1e293b] border border-[#334155] text-muted flex items-center justify-center hover:bg-[#334155] hover:text-white transition-all"
           >
             &larr;
@@ -197,7 +201,11 @@ export default function EconomicCalendar({
             {dateLabel}
           </span>
           <button
-            onClick={() => setDateOffset((d) => d + 1)}
+            onClick={() =>
+              setDateOffset(
+                (d) => d + (view === "monthly" ? 30 : view === "weekly" ? 7 : 1)
+              )
+            }
             className="w-9 h-9 rounded-lg bg-[#1e293b] border border-[#334155] text-muted flex items-center justify-center hover:bg-[#334155] hover:text-white transition-all"
           >
             &rarr;
@@ -211,15 +219,22 @@ export default function EconomicCalendar({
         </button>
       </div>
 
-      <div className="max-h-[400px] overflow-y-auto">
-        {loading ? (
-          <div className="p-8 text-center text-muted text-sm">Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-muted text-sm">
-            No events match your filters
-          </div>
-        ) : (
-          <table className="w-full text-sm">
+      {view === "monthly" ? (
+        <MonthGrid
+          monthStart={rangeStart}
+          events={filtered}
+          loading={loading}
+        />
+      ) : (
+        <div className="max-h-[400px] overflow-y-auto">
+          {loading ? (
+            <div className="p-8 text-center text-muted text-sm">Loading...</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-8 text-center text-muted text-sm">
+              No events match your filters
+            </div>
+          ) : (
+            <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-muted uppercase tracking-wide border-b border-border">
                 <th className="text-left px-5 py-2.5 w-12"></th>
@@ -262,10 +277,147 @@ export default function EconomicCalendar({
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const DOT_COLOR: Record<string, string> = {
+  high: "bg-danger",
+  medium: "bg-warning",
+  low: "bg-muted/70",
+};
+
+const WEEKDAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function MonthGrid({
+  monthStart,
+  events,
+  loading,
+}: {
+  monthStart: Date;
+  events: CalendarEvent[];
+  loading: boolean;
+}) {
+  // 42-cell grid beginning on the Sunday on/before the 1st.
+  const gridStart = new Date(monthStart);
+  gridStart.setDate(1);
+  gridStart.setDate(gridStart.getDate() - gridStart.getDay());
+
+  const cells: Date[] = [];
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    cells.push(d);
+  }
+
+  // Bucket events by YYYY-MM-DD.
+  const byDay = new Map<string, CalendarEvent[]>();
+  for (const e of events) {
+    const d = new Date(e.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}-${String(d.getDate()).padStart(2, "0")}`;
+    const list = byDay.get(key) ?? [];
+    list.push(e);
+    byDay.set(key, list);
+  }
+  // Sort per-day by time.
+  for (const list of byDay.values()) {
+    list.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }
+
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-muted text-sm">Loading...</div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-7">
+      {WEEKDAY_HEADERS.map((d) => (
+        <div
+          key={d}
+          className="text-xs text-muted font-semibold text-center py-2 border-b border-border"
+        >
+          {d}
+        </div>
+      ))}
+      {cells.map((d, i) => {
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}-${String(d.getDate()).padStart(2, "0")}`;
+        const dayEvents = byDay.get(key) ?? [];
+        const inMonth = d.getMonth() === monthStart.getMonth();
+        const isToday = key === todayKey;
+
+        return (
+          <div
+            key={i}
+            className={`relative border-r border-b border-border/60 min-h-[110px] p-2 ${
+              !inMonth ? "opacity-30" : ""
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              {isToday ? (
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent text-white text-xs font-bold">
+                  {d.getDate()}
+                </span>
+              ) : (
+                <span className="text-xs text-muted font-medium">
+                  {d.getDate()}
+                </span>
+              )}
+              {dayEvents.length > 0 && inMonth && (
+                <span className="text-[10px] text-muted">
+                  {dayEvents.length}
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              {dayEvents.slice(0, 3).map((e, idx) => (
+                <div
+                  key={idx}
+                  title={`${new Date(e.date).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })} — ${e.country} ${e.title}`}
+                  className="flex items-center gap-1.5 text-[11px] leading-tight"
+                >
+                  <span
+                    className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${
+                      DOT_COLOR[e.impact]
+                    }`}
+                  />
+                  <span className="truncate text-foreground/90">
+                    {e.title}
+                  </span>
+                </div>
+              ))}
+              {dayEvents.length > 3 && (
+                <div className="text-[10px] text-muted font-medium">
+                  +{dayEvents.length - 3} more
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
