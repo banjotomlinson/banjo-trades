@@ -4,6 +4,7 @@ import TradingViewChart from "@/components/dashboard/TradingViewChart";
 import CountdownBar from "@/components/dashboard/CountdownBar";
 import MarketsSnapshot from "@/components/dashboard/MarketsSnapshot";
 import SessionLevels from "@/components/dashboard/SessionLevels";
+import PositionCalculator from "@/components/dashboard/PositionCalculator";
 
 export default function Dashboard() {
   return (
@@ -19,6 +20,7 @@ export default function Dashboard() {
       <CountdownBar />
       <MarketsSnapshot />
       <SessionLevels />
+      <PositionCalculator />
     </div>
   );
 }
