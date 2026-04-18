@@ -30,13 +30,21 @@ interface FinnhubNews {
   category: string;
 }
 
-interface ForexEvent {
-  title: string;
+interface FinnhubCalendarEvent {
   country: string;
-  date: string;
+  event: string;
   impact: string;
-  forecast: string;
-  previous: string;
+  time: string;
+  actual: number | string | null;
+  estimate: number | string | null;
+  prev: number | string | null;
+  unit: string;
+}
+
+function formatVal(v: number | string | null, unit: string): string {
+  if (v === null || v === undefined || v === "") return "";
+  const s = typeof v === "number" ? String(v) : v;
+  return unit ? `${s}${unit}` : s;
 }
 
 export async function fetchNews(): Promise<NewsItem[]> {
@@ -63,24 +71,42 @@ export async function fetchNews(): Promise<NewsItem[]> {
 }
 
 export async function fetchCalendarEvents(): Promise<CalendarEvent[]> {
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) return [];
+
+  // Window: 7 days back through 45 days ahead. Covers daily/weekly/monthly
+  // views without needing a second fetch when the user scrolls.
+  const now = new Date();
+  const from = new Date(now);
+  from.setDate(from.getDate() - 7);
+  const to = new Date(now);
+  to.setDate(to.getDate() + 45);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+
   try {
     const res = await fetch(
-      "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+      `https://finnhub.io/api/v1/calendar/economic?from=${iso(
+        from
+      )}&to=${iso(to)}&token=${apiKey}`,
       { next: { revalidate: 300 } }
     );
     if (!res.ok) return [];
-    const raw: ForexEvent[] = await res.json();
+    const data: { economicCalendar?: FinnhubCalendarEvent[] } = await res.json();
+    const raw = data.economicCalendar ?? [];
 
     return raw
-      .filter((e) => ["High", "Medium", "Low"].includes(e.impact))
+      .filter((e) => ["high", "medium", "low"].includes(e.impact))
       .map((e) => ({
-        title: e.title,
+        title: e.event,
         country: e.country,
-        date: e.date,
+        // Finnhub returns "YYYY-MM-DD HH:mm:ss" in UTC; normalize to ISO.
+        date: e.time.includes("T")
+          ? e.time
+          : `${e.time.replace(" ", "T")}Z`,
         impact: e.impact.toLowerCase() as "high" | "medium" | "low",
-        forecast: e.forecast || "",
-        previous: e.previous || "",
-        actual: "",
+        forecast: formatVal(e.estimate, e.unit),
+        previous: formatVal(e.prev, e.unit),
+        actual: formatVal(e.actual, e.unit),
       }));
   } catch {
     return [];
