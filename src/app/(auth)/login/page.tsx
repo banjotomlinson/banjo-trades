@@ -6,6 +6,9 @@ import { useState } from "react";
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   async function handleGoogleLogin() {
     setLoading(true);
@@ -23,6 +26,40 @@ export default function LoginPage() {
     }
   }
 
+  async function handleEmailAuth(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    const supabase = createClient();
+
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/callback`,
+        },
+      });
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      window.location.href = "/";
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      window.location.href = "/";
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0e17] flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
@@ -37,7 +74,7 @@ export default function LoginPage() {
 
         <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-8">
           <h2 className="text-lg font-semibold text-white mb-6 text-center">
-            Sign in to continue
+            {mode === "login" ? "Sign in to continue" : "Create an account"}
           </h2>
 
           {error && (
@@ -45,6 +82,54 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+
+          <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+            <div>
+              <label htmlFor="email" className="block text-xs font-medium text-[#94a3b8] mb-1.5">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full bg-[#0a0e17] border border-[#1e293b] rounded-lg px-3 py-2.5 text-white text-sm placeholder-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
+                placeholder="you@example.com"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-xs font-medium text-[#94a3b8] mb-1.5">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full bg-[#0a0e17] border border-[#1e293b] rounded-lg px-3 py-2.5 text-white text-sm placeholder-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
+                placeholder="Min 6 characters"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#3b82f6] text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-[#2563eb] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
+            </button>
+          </form>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#1e293b]" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-[#111827] px-3 text-[#475569]">or</span>
+            </div>
+          </div>
 
           <button
             onClick={handleGoogleLogin}
@@ -73,6 +158,16 @@ export default function LoginPage() {
           </button>
 
           <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(null); }}
+              className="text-[#3b82f6] text-sm hover:underline"
+            >
+              {mode === "login" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            </button>
+          </div>
+
+          <div className="mt-4 text-center">
             <p className="text-[#475569] text-xs">
               By signing in, you agree to our terms of service
             </p>
