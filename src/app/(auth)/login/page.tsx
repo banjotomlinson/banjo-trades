@@ -51,11 +51,24 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
+      if (data.user && !data.session) {
+        const identities = data.user.identities ?? [];
+        if (identities.length === 0) {
+          const { data: signInData } = await supabase.auth.signInWithPassword({ email, password: "" }).catch(() => ({ data: null }));
+          if (!signInData?.session) {
+            setError("An account with this email already exists. Try signing in with Google instead.");
+          }
+          setLoading(false);
+          return;
+        }
+        setError("Account created but could not log in automatically. Please sign in.");
+        setMode("login");
+        setLoading(false);
+        return;
+      }
       if (data.session) {
         window.location.href = "/";
       } else {
-        setError("Account created but could not log in automatically. Please sign in.");
-        setMode("login");
         setLoading(false);
       }
     } else {
@@ -64,7 +77,12 @@ export default function LoginPage() {
         password,
       });
       if (error) {
-        setError(error.message);
+        const msg = error.message.toLowerCase();
+        if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
+          setError("Invalid email or password. If you signed up with Google, use the Google button below instead.");
+        } else {
+          setError(error.message);
+        }
         setLoading(false);
         return;
       }
