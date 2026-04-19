@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useId } from "react";
 
 declare global {
   interface Window {
@@ -77,6 +77,7 @@ const CATEGORIES = [...new Set(INSTRUMENTS.map((i) => i.cat))];
 interface TradingViewChartProps {
   symbol: string;
   label: string;
+  slot?: string;
 }
 
 let tvScriptLoaded = false;
@@ -129,28 +130,52 @@ function buildChart(container: HTMLElement, id: string, sym: string) {
     studies: ["SessionBreaks@tv-basicstudies"],
     hide_volume: true,
     withdateranges: true,
+    drawings_access: { type: "all" },
+    saved_data: true,
   });
 }
 
-export default function TradingViewChart({ symbol: defaultSymbol, label: defaultLabel }: TradingViewChartProps) {
+export default function TradingViewChart({ symbol: defaultSymbol, label: defaultLabel, slot }: TradingViewChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const fsChartRef = useRef<HTMLDivElement>(null);
   const [activeSymbol, setActiveSymbol] = useState(defaultSymbol);
   const [activeLabel, setActiveLabel] = useState(defaultLabel);
+  const [loaded, setLoaded] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [filterCat, setFilterCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [fullscreen, setFullscreen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const chartIdRef = useRef(`tv-${Math.random().toString(36).slice(2, 8)}`);
-  const fsChartIdRef = useRef(`tv-fs-${Math.random().toString(36).slice(2, 8)}`);
+  const reactId = useId();
+  const chartIdRef = useRef(`tv-${reactId.replace(/:/g, "")}`);
+  const fsChartIdRef = useRef(`tv-fs-${reactId.replace(/:/g, "")}`);
+
+  // Load saved instrument preference from Supabase
+  useEffect(() => {
+    if (!slot) { setLoaded(true); return; }
+
+    fetch("/api/chart-preferences")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.preferences) {
+          const pref = data.preferences.find((p: { slot: string }) => p.slot === slot);
+          if (pref) {
+            setActiveSymbol(pref.symbol);
+            setActiveLabel(pref.label);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [slot]);
 
   useEffect(() => {
+    if (!loaded) return;
     loadTvScript().then(() => {
       if (chartRef.current) buildChart(chartRef.current, chartIdRef.current, activeSymbol);
     });
-  }, [activeSymbol]);
+  }, [activeSymbol, loaded]);
 
   useEffect(() => {
     if (fullscreen && fsChartRef.current) {
@@ -190,11 +215,21 @@ export default function TradingViewChart({ symbol: defaultSymbol, label: default
     return () => document.removeEventListener("keydown", handleEsc);
   }, [fullscreen]);
 
+  const savePreference = useCallback((symbol: string, label: string) => {
+    if (!slot) return;
+    fetch("/api/chart-preferences", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slot, symbol, label }),
+    }).catch(() => {});
+  }, [slot]);
+
   const selectInstrument = (inst: Instrument) => {
     setActiveSymbol(inst.symbol);
     setActiveLabel(inst.name);
     setDropdownOpen(false);
     setSearch("");
+    savePreference(inst.symbol, inst.name);
   };
 
   const q = search.toLowerCase();

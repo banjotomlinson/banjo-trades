@@ -13,8 +13,8 @@ export default function Dashboard() {
       <MarketClocks />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TradingViewChart symbol="PEPPERSTONE:NAS100" label="NASDAQ 100" />
-        <TradingViewChart symbol="FOREXCOM:SPXUSD" label="S&P 500" />
+        <TradingViewChart symbol="PEPPERSTONE:NAS100" label="NASDAQ 100" slot="chart-left" />
+        <TradingViewChart symbol="FOREXCOM:SPXUSD" label="S&P 500" slot="chart-right" />
       </div>
 
       <CountdownBar />
