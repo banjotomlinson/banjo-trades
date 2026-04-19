@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   async function handleGoogleLogin() {
     setLoading(true);
@@ -33,11 +34,16 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      if (password !== confirmPassword) {
+        setError("Passwords do not match");
+        setLoading(false);
+        return;
+      }
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/callback`,
+          data: { email },
         },
       });
       if (error) {
@@ -45,7 +51,13 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      window.location.href = "/";
+      if (data.session) {
+        window.location.href = "/";
+      } else {
+        setError("Account created but could not log in automatically. Please sign in.");
+        setMode("login");
+        setLoading(false);
+      }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -113,9 +125,33 @@ export default function LoginPage() {
                 placeholder="Min 6 characters"
               />
             </div>
+            {mode === "signup" && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-xs font-medium text-[#94a3b8] mb-1.5">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className={`w-full bg-[#0a0e17] border rounded-lg px-3 py-2.5 text-white text-sm placeholder-[#475569] focus:outline-none transition-colors ${
+                    confirmPassword && password !== confirmPassword
+                      ? "border-red-500/50 focus:border-red-500"
+                      : "border-[#1e293b] focus:border-[#3b82f6]"
+                  }`}
+                  placeholder="Re-enter your password"
+                />
+                {confirmPassword && password !== confirmPassword && (
+                  <p className="text-red-400 text-xs mt-1.5">Passwords do not match</p>
+                )}
+              </div>
+            )}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (mode === "signup" && password !== confirmPassword)}
               className="w-full bg-[#3b82f6] text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-[#2563eb] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
@@ -160,7 +196,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <button
               type="button"
-              onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(null); }}
+              onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(null); setConfirmPassword(""); }}
               className="text-[#3b82f6] text-sm hover:underline"
             >
               {mode === "login" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
