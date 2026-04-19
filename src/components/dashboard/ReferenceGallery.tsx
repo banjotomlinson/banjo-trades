@@ -1,63 +1,36 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+import { createClient } from "@/lib/supabase/client";
 
 interface GalleryImage {
   id: string;
   name: string;
-  dataUrl: string;
+  url: string;
+  storage_path?: string;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Constants                                                          */
-/* ------------------------------------------------------------------ */
-
-const GALLERY_KEY = "liqGallery";
 const MAX_IMAGES = 10;
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
-
-/* ------------------------------------------------------------------ */
-/*  Main component                                                     */
-/* ------------------------------------------------------------------ */
+const MAX_BYTES = 2 * 1024 * 1024;
 
 export default function ReferenceGallery() {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [dragover, setDragover] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Restore from localStorage on mount
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(GALLERY_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as GalleryImage[];
-        if (Array.isArray(parsed)) setImages(parsed);
-      }
-    } catch {
-      // ignore corrupt data
-    }
+    fetch("/api/gallery")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.images && Array.isArray(data.images)) {
+          setImages(data.images);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  // Persist to localStorage whenever images change (skip initial mount)
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    try {
-      localStorage.setItem(GALLERY_KEY, JSON.stringify(images));
-    } catch (err) {
-      console.warn("[liq-gallery] localStorage write failed", err);
-    }
-  }, [images]);
-
-  // Close lightbox on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setLightboxSrc(null);
@@ -66,50 +39,76 @@ export default function ReferenceGallery() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  // Process dropped / selected files
   const handleFiles = useCallback(
-    (fileList: FileList | null) => {
-      if (!fileList) return;
+    async (fileList: FileList | null) => {
+      if (!fileList || uploading) return;
       const files = Array.from(fileList).filter((f) =>
         f.type.startsWith("image/")
       );
       if (!files.length) return;
 
+      setUploading(true);
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setUploading(false);
+        return;
+      }
+
       const remaining = MAX_IMAGES - images.length;
-      files.slice(0, remaining).forEach((f) => {
-        if (f.size > MAX_BYTES) {
-          console.warn("[liq-gallery] skipping large file", f.name, f.size);
-          return;
+
+      for (const f of files.slice(0, remaining)) {
+        if (f.size > MAX_BYTES) continue;
+
+        const id = "img_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+        const ext = (f.type.split("/")[1] || "png").replace("jpeg", "jpg");
+        const path = `${user.id}/${id}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("gallery")
+          .upload(path, f, { contentType: f.type });
+
+        if (uploadError) continue;
+
+        await supabase.from("gallery_images").insert({
+          id,
+          user_id: user.id,
+          name: f.name,
+          storage_path: path,
+        });
+
+        const { data: signed } = await supabase.storage
+          .from("gallery")
+          .createSignedUrl(path, 3600);
+
+        if (signed?.signedUrl) {
+          setImages((prev) => [
+            ...prev,
+            { id, name: f.name, url: signed.signedUrl, storage_path: path },
+          ]);
         }
-        const reader = new FileReader();
-        reader.onload = () => {
-          const newImg: GalleryImage = {
-            id:
-              "img_" +
-              Date.now() +
-              "_" +
-              Math.random().toString(36).slice(2, 8),
-            name: f.name,
-            dataUrl: reader.result as string,
-          };
-          setImages((prev) => {
-            if (prev.length >= MAX_IMAGES) return prev;
-            return [...prev, newImg];
-          });
-        };
-        reader.readAsDataURL(f);
-      });
+      }
+
+      setUploading(false);
     },
-    [images.length]
+    [images.length, uploading]
   );
 
   const removeImage = useCallback((id: string) => {
     setImages((prev) => prev.filter((img) => img.id !== id));
+
+    fetch("/api/gallery", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
   }, []);
 
   return (
     <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-5">
-      {/* Header */}
       <div className="flex items-center justify-between mb-3 pb-3 border-b border-[#1e293b]">
         <h3 className="text-[13px] font-bold uppercase tracking-wide text-slate-200 m-0">
           Reference Charts
@@ -117,9 +116,10 @@ export default function ReferenceGallery() {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="bg-[#1e293b] text-slate-200 border border-[#334155] px-3 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer hover:bg-[#334155] hover:border-[#475569]"
+          disabled={uploading}
+          className="bg-[#1e293b] text-slate-200 border border-[#334155] px-3 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer hover:bg-[#334155] hover:border-[#475569] disabled:opacity-50"
         >
-          + Upload
+          {uploading ? "Uploading..." : "+ Upload"}
         </button>
         <input
           ref={fileInputRef}
@@ -134,7 +134,6 @@ export default function ReferenceGallery() {
         />
       </div>
 
-      {/* Drop zone */}
       <div
         onDragEnter={(e) => {
           e.preventDefault();
@@ -161,8 +160,7 @@ export default function ReferenceGallery() {
       >
         {images.length === 0 && (
           <div className="flex-1 text-center text-slate-600 text-xs">
-            Drag &amp; drop chart screenshots here, or click Upload. Stored
-            locally until backend is wired.
+            Drag &amp; drop chart screenshots here, or click Upload.
           </div>
         )}
 
@@ -170,11 +168,11 @@ export default function ReferenceGallery() {
           <div
             key={img.id}
             className="relative w-20 h-20 rounded-md overflow-hidden cursor-pointer flex-none border border-[#1e293b] group"
-            onClick={() => setLightboxSrc(img.dataUrl)}
+            onClick={() => setLightboxSrc(img.url)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={img.dataUrl}
+              src={img.url}
               alt={img.name}
               className="w-full h-full object-cover block"
             />
@@ -193,7 +191,6 @@ export default function ReferenceGallery() {
         ))}
       </div>
 
-      {/* Lightbox */}
       {lightboxSrc && (
         <div
           className="fixed inset-0 z-[100] bg-black/85 flex items-center justify-center p-10 cursor-zoom-out"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 
 export interface Trade {
   id: string;
@@ -44,28 +44,41 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
   const [localTrades, setLocalTrades] = useState<Trade[]>([]);
   const [editingDate, setEditingDate] = useState<string | null>(null);
 
-  // Load persisted trades on mount. SSR-safe: effect runs only in the browser.
+  // Load: localStorage first for instant paint, then Supabase as authoritative source
   useEffect(() => {
     if (controlled) return;
+
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Trade[];
         if (Array.isArray(parsed)) setLocalTrades(parsed);
       }
-    } catch {
-      // ignore corrupted storage
-    }
+    } catch {}
+
+    fetch("/api/trades")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.trades && Array.isArray(data.trades) && data.trades.length > 0) {
+          const mapped: Trade[] = data.trades.map((t: { id: string; date: string; pnl: number; note?: string | null }) => ({
+            id: t.id,
+            date: typeof t.date === "string" ? t.date.slice(0, 10) : t.date,
+            pnl: Number(t.pnl),
+            note: t.note || undefined,
+          }));
+          setLocalTrades(mapped);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
+        }
+      })
+      .catch(() => {});
   }, [controlled]);
 
-  // Persist whenever localTrades changes.
+  // Persist to localStorage on change
   useEffect(() => {
     if (controlled) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(localTrades));
-    } catch {
-      // quota or privacy mode — silently drop
-    }
+    } catch {}
   }, [localTrades, controlled]);
 
   const trades = controlled ? tradesProp! : localTrades;
@@ -82,7 +95,7 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
     return m;
   }, [trades]);
 
-  // Build 6-row × 7-col grid starting on the Sunday on/before the 1st.
+  // Build 6-row x 7-col grid starting on the Sunday on/before the 1st.
   const gridStart = new Date(cursor);
   gridStart.setDate(1);
   gridStart.setDate(gridStart.getDate() - gridStart.getDay());
@@ -153,15 +166,26 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
     ? trades.filter((t) => t.date === editingDate)
     : [];
 
-  function addTrade(date: string, pnl: number, note: string) {
-    setLocalTrades((prev) => [
-      ...prev,
-      { id: makeId(), date, pnl, note: note || undefined },
-    ]);
-  }
-  function removeTrade(id: string) {
+  const addTrade = useCallback((date: string, pnl: number, note: string) => {
+    const trade: Trade = { id: makeId(), date, pnl, note: note || undefined };
+    setLocalTrades((prev) => [...prev, trade]);
+
+    fetch("/api/trades", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trades: [{ id: trade.id, date: trade.date, pnl: trade.pnl, note: trade.note }] }),
+    }).catch(() => {});
+  }, []);
+
+  const removeTrade = useCallback((id: string) => {
     setLocalTrades((prev) => prev.filter((t) => t.id !== id));
-  }
+
+    fetch("/api/trades", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
+  }, []);
 
   return (
     <div className="bg-panel border border-border rounded-xl overflow-hidden">
@@ -371,7 +395,7 @@ function TradeEditor({
             className="w-8 h-8 rounded-md text-muted hover:text-white hover:bg-[#334155] transition-colors"
             aria-label="Close"
           >
-            ×
+            x
           </button>
         </div>
 
@@ -399,7 +423,7 @@ function TradeEditor({
                   className="text-muted hover:text-bear transition-colors text-lg px-2"
                   aria-label="Delete trade"
                 >
-                  ×
+                  x
                 </button>
               </div>
             ))}

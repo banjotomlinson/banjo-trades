@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useProfile } from "@/components/providers/ProfileProvider";
 
 interface SidebarContext {
   collapsed: boolean;
@@ -14,20 +15,21 @@ export function useSidebar() {
 }
 
 export default function SidebarProvider({ children }: { children: React.ReactNode }) {
+  const { profile, updateProfile, loaded } = useProfile();
   const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem("banjoSidebarCollapsed");
-    if (stored !== null) setCollapsed(stored === "true");
-  }, []);
+    if (!loaded || !profile) return;
+    setCollapsed(profile.sidebar_collapsed ?? true);
+  }, [loaded, profile]);
 
   const toggle = useCallback(() => {
     setCollapsed((prev) => {
       const next = !prev;
-      localStorage.setItem("banjoSidebarCollapsed", String(next));
+      updateProfile({ sidebar_collapsed: next });
       return next;
     });
-  }, []);
+  }, [updateProfile]);
 
   return <Ctx.Provider value={{ collapsed, toggle }}>{children}</Ctx.Provider>;
 }

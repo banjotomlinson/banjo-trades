@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useProfile } from "@/components/providers/ProfileProvider";
 
 const TZ_OPTIONS = [
   { val: "America/New_York", label: "New York (ET)" },
@@ -63,13 +64,19 @@ function getSessionStatus(startSec: number, endSec: number, overnight: boolean, 
 }
 
 export default function MarketClocks() {
+  const { profile, updateProfile } = useProfile();
+  const browserTZ = typeof window !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
   const [userTZ, setUserTZ] = useState("");
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    const stored = localStorage.getItem("banjoTZ");
-    setUserTZ(stored || Intl.DateTimeFormat().resolvedOptions().timeZone);
-  }, []);
+    const profileTZ = profile?.timezone;
+    if (profileTZ && profileTZ !== "auto") {
+      setUserTZ(profileTZ);
+    } else {
+      setUserTZ(browserTZ);
+    }
+  }, [profile?.timezone, browserTZ]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -78,8 +85,8 @@ export default function MarketClocks() {
 
   const handleTZChange = useCallback((tz: string) => {
     setUserTZ(tz);
-    localStorage.setItem("banjoTZ", tz);
-  }, []);
+    updateProfile({ timezone: tz });
+  }, [updateProfile]);
 
   const tzOptions = useMemo(() => {
     if (!userTZ) return TZ_OPTIONS;
@@ -96,9 +103,7 @@ export default function MarketClocks() {
 
   return (
     <div className="space-y-3">
-      {/* Clocks row */}
       <div className="flex items-stretch gap-3 overflow-x-auto">
-        {/* Your time */}
         <div className="bg-[#111827] border border-[#1e293b] rounded-xl px-5 py-4 min-w-[180px] flex flex-col">
           <div className="text-[10px] font-bold text-[#3b82f6] uppercase tracking-widest mb-2">Your Time</div>
           <div className="text-2xl font-black text-white tabular-nums tracking-tight leading-none">
@@ -115,7 +120,6 @@ export default function MarketClocks() {
           </select>
         </div>
 
-        {/* Market clocks */}
         {MARKET_CLOCKS.map((clock) => (
           <div
             key={clock.id}
@@ -134,7 +138,6 @@ export default function MarketClocks() {
         ))}
       </div>
 
-      {/* Session strip */}
       <div className="flex items-center gap-3">
         {SESSION_CONFIG.map((sess) => {
           const { isOpen, secsUntil } = getSessionStatus(sess.startSec, sess.endSec, sess.overnight, etNow);
