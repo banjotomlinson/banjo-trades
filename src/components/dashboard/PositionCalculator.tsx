@@ -48,6 +48,7 @@ export default function PositionCalculator() {
   const [entry, setEntry] = useState("");
   const [stop, setStop] = useState("");
   const [target, setTarget] = useState("");
+  const [rr, setRr] = useState("2");
 
   function handleAssetClassChange(ac: AssetClass) {
     setAssetClass(ac);
@@ -58,6 +59,22 @@ export default function PositionCalculator() {
     setTarget("");
   }
 
+  const entryNum = parseFloat(entry) || 0;
+  const stopNum = parseFloat(stop) || 0;
+  const rrNum = parseFloat(rr) || 0;
+  const stopDist = Math.abs(entryNum - stopNum);
+
+  const derivedTarget =
+    !target && rrNum > 0 && stopDist > 0 && entryNum > 0 && stopNum > 0
+      ? direction === "long"
+        ? entryNum + stopDist * rrNum
+        : entryNum - stopDist * rrNum
+      : undefined;
+
+  const effectiveTarget = target
+    ? parseFloat(target)
+    : derivedTarget;
+
   const result = useMemo(() => {
     return calculatePosition({
       instrument,
@@ -66,9 +83,9 @@ export default function PositionCalculator() {
       riskPct: parseFloat(riskPct) || 0,
       entry: parseFloat(entry) || 0,
       stop: parseFloat(stop) || 0,
-      target: target ? parseFloat(target) : undefined,
+      target: effectiveTarget,
     });
-  }, [instrument, direction, accountBalance, riskPct, entry, stop, target]);
+  }, [instrument, direction, accountBalance, riskPct, entry, stop, effectiveTarget]);
 
   const showResults =
     entry !== "" && stop !== "" && accountBalance !== "" && riskPct !== "";
@@ -209,7 +226,7 @@ export default function PositionCalculator() {
             </div>
             <div>
               <label className="block text-xs text-muted font-semibold mb-1.5">
-                Stop
+                Stop Loss
               </label>
               <input
                 type="text"
@@ -222,7 +239,7 @@ export default function PositionCalculator() {
             </div>
             <div>
               <label className="block text-xs text-muted font-semibold mb-1.5">
-                Target
+                Take Profit
                 <span className="text-muted/70 font-normal"> (opt.)</span>
               </label>
               <input
@@ -233,6 +250,42 @@ export default function PositionCalculator() {
                 placeholder="0.00"
                 className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-muted font-semibold mb-1.5">
+              Risk : Reward
+              <span className="text-muted/70 font-normal">
+                {" "}
+                (used when Take Profit is blank)
+              </span>
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted font-semibold">1 :</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={rr}
+                onChange={(e) => setRr(e.target.value)}
+                placeholder="2"
+                className="flex-1 bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+              />
+              <div className="flex gap-1">
+                {["1", "1.5", "2", "3"].map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setRr(v)}
+                    className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                      rr === v
+                        ? "bg-accent text-white"
+                        : "bg-background border border-border text-muted hover:text-foreground"
+                    }`}
+                  >
+                    1:{v}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -286,6 +339,13 @@ export default function PositionCalculator() {
                 value={formatUsd(-result.potentialLoss)}
                 tone="bear"
               />
+              {derivedTarget !== undefined && (
+                <Row
+                  label="Suggested take profit"
+                  value={formatNum(derivedTarget, instrument.priceDecimals)}
+                  tone="bull"
+                />
+              )}
               {result.potentialProfit !== null && (
                 <>
                   <Row
