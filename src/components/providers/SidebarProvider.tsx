@@ -16,12 +16,12 @@ export function useSidebar() {
 
 export default function SidebarProvider({ children }: { children: React.ReactNode }) {
   const { profile, updateProfile, loaded } = useProfile();
+  const profileCollapsed = loaded && profile ? (profile.sidebar_collapsed ?? true) : true;
   const [collapsed, setCollapsed] = useState(true);
 
-  useEffect(() => {
-    if (!loaded || !profile) return;
-    setCollapsed(profile.sidebar_collapsed ?? true);
-  }, [loaded, profile]);
+  if (loaded && profile && collapsed !== profileCollapsed) {
+    setCollapsed(profileCollapsed);
+  }
 
   const toggle = useCallback(() => {
     setCollapsed((prev) => {

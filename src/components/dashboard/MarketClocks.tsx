@@ -66,17 +66,14 @@ function getSessionStatus(startSec: number, endSec: number, overnight: boolean, 
 export default function MarketClocks() {
   const { profile, updateProfile } = useProfile();
   const browserTZ = typeof window !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
-  const [userTZ, setUserTZ] = useState("");
+  const profileTZ = profile?.timezone;
+  const resolvedTZ = profileTZ && profileTZ !== "auto" ? profileTZ : browserTZ;
+  const [userTZ, setUserTZ] = useState(resolvedTZ);
   const [now, setNow] = useState(new Date());
 
-  useEffect(() => {
-    const profileTZ = profile?.timezone;
-    if (profileTZ && profileTZ !== "auto") {
-      setUserTZ(profileTZ);
-    } else {
-      setUserTZ(browserTZ);
-    }
-  }, [profile?.timezone, browserTZ]);
+  if (resolvedTZ !== userTZ && resolvedTZ) {
+    setUserTZ(resolvedTZ);
+  }
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
