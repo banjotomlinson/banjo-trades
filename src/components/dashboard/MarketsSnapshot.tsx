@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import {
+  useTradingMode,
+  type TradingMode,
+} from "@/components/providers/TradingModeProvider";
 
 // ── Types ────────────────────────────────────────────────────────
 interface Candle {
@@ -18,7 +22,7 @@ interface Confluence {
 }
 
 interface SnapshotInstrument {
-  cat: string;
+  cat: Exclude<TradingMode, "all">;
   symbol: string;
   name: string;
   sub: string;
@@ -443,11 +447,11 @@ function LoadingSkeleton() {
 
 // ── Main Component ───────────────────────────────────────────────
 export default function MarketsSnapshot() {
+  const { mode, setMode } = useTradingMode();
   const [data, setData] = useState<SnapshotEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const [activeCategory, setActiveCategory] = useState("futures");
   const [session, setSession] = useState<MarketSession>(getMarketSession);
   const cacheTs = useRef(0);
 
@@ -541,13 +545,13 @@ export default function MarketsSnapshot() {
       ) : error && !data ? (
         <div className="text-[#334155] text-[11px] text-center py-10">Snapshot unavailable</div>
       ) : data ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 justify-center">
+        <div className="grid gap-3 justify-center grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {data.map((entry) => (
             <BiasCard
               key={entry.cat}
               entry={entry}
-              isActive={entry.cat === activeCategory}
-              onClick={() => setActiveCategory(entry.cat)}
+              isActive={entry.cat === mode}
+              onClick={() => setMode(entry.cat)}
             />
           ))}
         </div>

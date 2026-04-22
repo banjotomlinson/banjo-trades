@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import {
+  useTradingMode,
+  type TradingMode,
+} from "@/components/providers/TradingModeProvider";
 
 // ── Types ────────────────────────────────────────────────────────
 interface SessionHL {
@@ -10,8 +14,8 @@ interface SessionHL {
 }
 
 interface SessionData {
-  nas: SessionHL;
-  spx: SessionHL;
+  primary: SessionHL;
+  secondary: SessionHL;
   status: "live" | "upcoming" | "closed";
 }
 
@@ -24,6 +28,41 @@ interface YahooCandles {
   opens: (number | null)[];
   closes: (number | null)[];
 }
+
+interface Leg {
+  yahoo: string;
+  label: string;
+  decimals: number;
+}
+
+interface InstrumentPair {
+  primary: Leg;
+  secondary: Leg;
+}
+
+// ── Per-mode instrument pair ─────────────────────────────────────
+const MODE_INSTRUMENTS: Record<TradingMode, InstrumentPair> = {
+  all: {
+    primary: { yahoo: "NQ=F", label: "NAS", decimals: 2 },
+    secondary: { yahoo: "ES=F", label: "SPX", decimals: 2 },
+  },
+  futures: {
+    primary: { yahoo: "NQ=F", label: "NAS", decimals: 2 },
+    secondary: { yahoo: "ES=F", label: "SPX", decimals: 2 },
+  },
+  commodities: {
+    primary: { yahoo: "GC=F", label: "Gold", decimals: 2 },
+    secondary: { yahoo: "CL=F", label: "Oil", decimals: 2 },
+  },
+  forex: {
+    primary: { yahoo: "EURUSD=X", label: "EUR/USD", decimals: 5 },
+    secondary: { yahoo: "GBPUSD=X", label: "GBP/USD", decimals: 5 },
+  },
+  crypto: {
+    primary: { yahoo: "BTC-USD", label: "BTC", decimals: 2 },
+    secondary: { yahoo: "ETH-USD", label: "ETH", decimals: 2 },
+  },
+};
 
 // ── Constants ────────────────────────────────────────────────────
 const SESSIONS: Record<SessionKey, {
@@ -41,7 +80,7 @@ const SESSIONS: Record<SessionKey, {
   asia: {
     startH: 18, startM: 0, endH: 2, endM: 0,
     overnight: true, label: "Asia",
-    timeRange: "6:00 PM \u2014 2:00 AM ET",
+    timeRange: "6:00 PM — 2:00 AM ET",
     dotColor: "bg-purple-500",
     headingColor: "text-purple-500",
     toggleActiveColor: "bg-purple-500",
@@ -49,7 +88,7 @@ const SESSIONS: Record<SessionKey, {
   london: {
     startH: 3, startM: 0, endH: 8, endM: 0,
     overnight: false, label: "London",
-    timeRange: "3:00 AM \u2014 8:00 AM ET",
+    timeRange: "3:00 AM — 8:00 AM ET",
     dotColor: "bg-blue-500",
     headingColor: "text-blue-500",
     toggleActiveColor: "bg-blue-500",
@@ -57,7 +96,7 @@ const SESSIONS: Record<SessionKey, {
   newyork: {
     startH: 9, startM: 30, endH: 16, endM: 0,
     overnight: false, label: "New York",
-    timeRange: "9:30 AM \u2014 4:00 PM ET",
+    timeRange: "9:30 AM — 4:00 PM ET",
     dotColor: "bg-green-500",
     headingColor: "text-green-500",
     toggleActiveColor: "bg-green-500",
@@ -158,9 +197,12 @@ function computePivotPoints(high: number, low: number, close: number) {
   };
 }
 
-function fmt(n: number | null): string {
+function fmt(n: number | null, decimals = 2): string {
   if (n == null) return "--";
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 }
 
 // ── Sub-components ───────────────────────────────────────────────
@@ -185,24 +227,28 @@ function SessionCard({
   sessionKey,
   sessionData,
   visible,
+  instruments,
 }: {
   sessionKey: SessionKey;
   sessionData: SessionData | null;
   visible: boolean;
+  instruments: InstrumentPair;
 }) {
   const cfg = SESSIONS[sessionKey];
   if (!visible) return null;
 
   const data = sessionData;
   const status = data?.status ?? "closed";
+  const p = instruments.primary;
+  const s = instruments.secondary;
 
-  // Compute pivot points from NAS data if available
+  // Compute pivot points from primary instrument data if available
   const pivots =
-    data?.nas.high != null && data?.nas.low != null
+    data?.primary.high != null && data?.primary.low != null
       ? computePivotPoints(
-          data.nas.high,
-          data.nas.low,
-          (data.nas.high + data.nas.low) / 2
+          data.primary.high,
+          data.primary.low,
+          (data.primary.high + data.primary.low) / 2
         )
       : null;
 
@@ -211,27 +257,27 @@ function SessionCard({
       <h3 className={`text-sm font-bold mb-0.5 ${cfg.headingColor}`}>{cfg.label} Session</h3>
       <div className="text-[11px] text-[#475569] mb-3">{cfg.timeRange}</div>
 
-      {/* NAS levels */}
-      <LevelRow label="NAS High" value={fmt(data?.nas.high ?? null)} colorClass="text-red-500" />
-      <LevelRow label="NAS Low" value={fmt(data?.nas.low ?? null)} colorClass="text-green-500" />
-      <LevelRow label="NAS Range" value={fmt(data?.nas.range ?? null)} colorClass="text-amber-500" />
+      {/* Primary instrument levels */}
+      <LevelRow label={`${p.label} High`} value={fmt(data?.primary.high ?? null, p.decimals)} colorClass="text-red-500" />
+      <LevelRow label={`${p.label} Low`} value={fmt(data?.primary.low ?? null, p.decimals)} colorClass="text-green-500" />
+      <LevelRow label={`${p.label} Range`} value={fmt(data?.primary.range ?? null, p.decimals)} colorClass="text-amber-500" />
 
-      {/* SPX levels */}
-      <LevelRow label="SPX High" value={fmt(data?.spx.high ?? null)} colorClass="text-red-500" />
-      <LevelRow label="SPX Low" value={fmt(data?.spx.low ?? null)} colorClass="text-green-500" />
-      <LevelRow label="SPX Range" value={fmt(data?.spx.range ?? null)} colorClass="text-amber-500" />
+      {/* Secondary instrument levels */}
+      <LevelRow label={`${s.label} High`} value={fmt(data?.secondary.high ?? null, s.decimals)} colorClass="text-red-500" />
+      <LevelRow label={`${s.label} Low`} value={fmt(data?.secondary.low ?? null, s.decimals)} colorClass="text-green-500" />
+      <LevelRow label={`${s.label} Range`} value={fmt(data?.secondary.range ?? null, s.decimals)} colorClass="text-amber-500" />
 
-      {/* Pivot points (NAS-derived) */}
+      {/* Pivot points (primary-derived) */}
       {pivots && (
         <div className="mt-3 pt-2 border-t border-[#1e293b]">
           <div className="text-[11px] text-[#64748b] font-semibold uppercase mb-1.5">
-            Pivot Points (NAS)
+            Pivot Points ({p.label})
           </div>
-          <LevelRow label="Resistance 2" value={fmt(pivots.r2)} colorClass="text-red-400" />
-          <LevelRow label="Resistance 1" value={fmt(pivots.r1)} colorClass="text-red-400" />
-          <LevelRow label="Pivot" value={fmt(pivots.pivot)} colorClass="text-slate-300" />
-          <LevelRow label="Support 1" value={fmt(pivots.s1)} colorClass="text-green-400" />
-          <LevelRow label="Support 2" value={fmt(pivots.s2)} colorClass="text-green-400" />
+          <LevelRow label="Resistance 2" value={fmt(pivots.r2, p.decimals)} colorClass="text-red-400" />
+          <LevelRow label="Resistance 1" value={fmt(pivots.r1, p.decimals)} colorClass="text-red-400" />
+          <LevelRow label="Pivot" value={fmt(pivots.pivot, p.decimals)} colorClass="text-slate-300" />
+          <LevelRow label="Support 1" value={fmt(pivots.s1, p.decimals)} colorClass="text-green-400" />
+          <LevelRow label="Support 2" value={fmt(pivots.s2, p.decimals)} colorClass="text-green-400" />
         </div>
       )}
 
@@ -269,6 +315,9 @@ function LoadingSkeleton() {
 
 // ── Main Component ───────────────────────────────────────────────
 export default function SessionLevels() {
+  const { mode, modeLabel } = useTradingMode();
+  const instruments = MODE_INSTRUMENTS[mode];
+
   const [sessionDataMap, setSessionDataMap] = useState<Record<SessionKey, SessionData | null>>({
     asia: null,
     london: null,
@@ -289,6 +338,9 @@ export default function SessionLevels() {
     return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   }, [dayOffset]);
 
+  const primaryYahoo = instruments.primary.yahoo;
+  const secondaryYahoo = instruments.secondary.yahoo;
+
   const loadLevels = useCallback(async () => {
     setLoading(true);
     const et = getETNow();
@@ -298,12 +350,15 @@ export default function SessionLevels() {
     const etOffsetMs = new Date().getTime() - getETNow().getTime();
 
     try {
-      const [nasData, spxData] = await Promise.all([fetchYahoo("NQ=F"), fetchYahoo("ES=F")]);
+      const [primaryData, secondaryData] = await Promise.all([
+        fetchYahoo(primaryYahoo),
+        fetchYahoo(secondaryYahoo),
+      ]);
 
       const newMap: Record<SessionKey, SessionData> = {
-        asia: { nas: { high: null, low: null, range: null }, spx: { high: null, low: null, range: null }, status: "closed" },
-        london: { nas: { high: null, low: null, range: null }, spx: { high: null, low: null, range: null }, status: "closed" },
-        newyork: { nas: { high: null, low: null, range: null }, spx: { high: null, low: null, range: null }, status: "closed" },
+        asia: { primary: { high: null, low: null, range: null }, secondary: { high: null, low: null, range: null }, status: "closed" },
+        london: { primary: { high: null, low: null, range: null }, secondary: { high: null, low: null, range: null }, status: "closed" },
+        newyork: { primary: { high: null, low: null, range: null }, secondary: { high: null, low: null, range: null }, status: "closed" },
       };
 
       for (const key of Object.keys(SESSIONS) as SessionKey[]) {
@@ -326,10 +381,10 @@ export default function SessionLevels() {
         const startUtc = Math.floor((sessionStart.getTime() + etOffsetMs) / 1000);
         const endUtc = Math.floor((sessionEnd.getTime() + etOffsetMs) / 1000);
 
-        const nasHL = computeSessionHL(nasData, startUtc, endUtc);
-        const spxHL = computeSessionHL(spxData, startUtc, endUtc);
+        const primaryHL = computeSessionHL(primaryData, startUtc, endUtc);
+        const secondaryHL = computeSessionHL(secondaryData, startUtc, endUtc);
 
-        newMap[key] = { nas: nasHL, spx: spxHL, status };
+        newMap[key] = { primary: primaryHL, secondary: secondaryHL, status };
       }
 
       setSessionDataMap(newMap);
@@ -338,9 +393,14 @@ export default function SessionLevels() {
     } finally {
       setLoading(false);
     }
-  }, [dayOffset]);
+  }, [dayOffset, primaryYahoo, secondaryYahoo]);
 
-  // Load on mount + when dayOffset changes
+  // Reset cached data when the instrument pair changes so stale numbers don't flash
+  useEffect(() => {
+    setSessionDataMap({ asia: null, london: null, newyork: null });
+  }, [primaryYahoo, secondaryYahoo]);
+
+  // Load on mount + when dayOffset / instruments change
   useEffect(() => {
     loadLevels();
   }, [loadLevels]);
@@ -368,6 +428,9 @@ export default function SessionLevels() {
       <div className="flex items-center gap-2 flex-wrap bg-[#0f172a] border border-[#1e293b] rounded-xl px-4 py-2.5 mb-4">
         <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748b] mr-2">
           Session Levels
+          <span className="ml-2 text-[#94a3b8] normal-case tracking-normal">
+            {modeLabel} &middot; {instruments.primary.label} / {instruments.secondary.label}
+          </span>
         </span>
 
         {(Object.keys(SESSIONS) as SessionKey[]).map((key) => (
@@ -423,6 +486,7 @@ export default function SessionLevels() {
               sessionKey={key}
               sessionData={sessionDataMap[key]}
               visible={visibility[key]}
+              instruments={instruments}
             />
           ))}
         </div>
