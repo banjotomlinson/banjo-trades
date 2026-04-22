@@ -48,6 +48,21 @@ const CATEGORY_CURRENCIES: Record<CategoryKey, string[] | "all"> = {
   forex: "all",
 };
 
+// Top 10 most-traded currencies (BIS 2022 turnover survey).
+// Finnhub returns 2-letter country codes, so we filter by those.
+const TOP_CURRENCIES = [
+  "US",
+  "EU",
+  "JP",
+  "GB",
+  "CN",
+  "AU",
+  "CA",
+  "CH",
+  "HK",
+  "NZ",
+] as const;
+
 interface EconomicCalendarProps {
   initialEvents?: CalendarEvent[];
   view?: ViewMode;
@@ -70,12 +85,41 @@ export default function EconomicCalendar({
   const [loading, setLoading] = useState(!hasInitial);
   const [dateOffset, setDateOffset] = useState(0);
 
-  const currencyAllow = category ? CATEGORY_CURRENCIES[category] : ["US", "USD"];
+  // Currency multi-select. "all" = unfiltered. Seeds from `category` when
+  // provided (dashboard embeds), otherwise "all" (calendar page).
+  const [currencySelection, setCurrencySelection] = useState<
+    "all" | Set<string>
+  >(() => {
+    if (category) {
+      const cats = CATEGORY_CURRENCIES[category];
+      if (cats === "all") return "all";
+      return new Set(cats);
+    }
+    return "all";
+  });
+
   const matchesCategory = useCallback(
     (country: string) =>
-      currencyAllow === "all" ? true : currencyAllow.includes(country),
-    [currencyAllow]
+      currencySelection === "all" ? true : currencySelection.has(country),
+    [currencySelection]
   );
+
+  const toggleCurrency = useCallback((c: string) => {
+    setCurrencySelection((prev) => {
+      if (prev === "all") return new Set([c]);
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      if (next.size === 0) return "all";
+      return next;
+    });
+  }, []);
+
+  const availableCurrencies = useMemo(() => {
+    // Always expose the top 10 so the picker is stable even before events load.
+    // Keeps the canonical BIS turnover order so USD/EUR/JPY appear first.
+    return [...TOP_CURRENCIES];
+  }, []);
 
   // Tracks which date-range keys have already been fetched this session so
   // month navigation is idempotent and cheap.
@@ -221,7 +265,10 @@ export default function EconomicCalendar({
         )}
       </div>
 
-      <div className="flex gap-2 px-5 py-3 border-b border-border flex-wrap">
+      <div className="flex gap-2 px-5 py-3 border-b border-border flex-wrap items-center">
+        <span className="text-[10px] text-muted font-bold uppercase tracking-wider mr-1">
+          Impact
+        </span>
         {(["all", "high", "medium", "low"] as ImpactFilter[]).map((f) => (
           <button
             key={f}
@@ -245,6 +292,41 @@ export default function EconomicCalendar({
           </button>
         ))}
       </div>
+
+      {availableCurrencies.length > 0 && (
+        <div className="flex gap-2 px-5 py-3 border-b border-border flex-wrap items-center">
+          <span className="text-[10px] text-muted font-bold uppercase tracking-wider mr-1">
+            Currency
+          </span>
+          <button
+            onClick={() => setCurrencySelection("all")}
+            className={`px-3 py-1 rounded-md text-xs font-semibold border transition-all ${
+              currencySelection === "all"
+                ? "bg-accent text-white border-transparent"
+                : "border-border text-muted hover:text-foreground hover:border-muted"
+            }`}
+          >
+            All
+          </button>
+          {availableCurrencies.map((c) => {
+            const active =
+              currencySelection !== "all" && currencySelection.has(c);
+            return (
+              <button
+                key={c}
+                onClick={() => toggleCurrency(c)}
+                className={`px-3 py-1 rounded-md text-xs font-semibold border transition-all ${
+                  active
+                    ? "bg-accent text-white border-transparent"
+                    : "border-border text-muted hover:text-foreground hover:border-muted"
+                }`}
+              >
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="flex items-center justify-between px-5 py-3 border-b border-border">
         <div className="flex gap-2 items-center">
@@ -461,18 +543,20 @@ function MonthGrid({
             key={i}
             className={`group relative border-r border-b border-border/60 min-h-[110px] p-2 ${
               !inMonth ? "opacity-30" : ""
+            } ${
+              isToday
+                ? "bg-accent/10 ring-2 ring-inset ring-accent"
+                : ""
             }`}
           >
             <div className="flex items-center justify-between mb-1">
-              {isToday ? (
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent text-white text-xs font-bold">
-                  {d.getDate()}
-                </span>
-              ) : (
-                <span className="text-xs text-muted font-medium">
-                  {d.getDate()}
-                </span>
-              )}
+              <span
+                className={`text-xs font-bold ${
+                  isToday ? "text-accent" : "text-muted font-medium"
+                }`}
+              >
+                {d.getDate()}
+              </span>
               {summary && (
                 <span
                   className={`inline-flex items-center gap-1 text-[10px] font-semibold ${BIAS_STYLE[summary.bias].text}`}

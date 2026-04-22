@@ -7,10 +7,15 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { useSidebar } from "@/components/providers/SidebarProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import {
+  useTradingMode,
+  TRADING_MODES,
+} from "@/components/providers/TradingModeProvider";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "⊞", href: "/" },
   { id: "calendar", label: "Calendar", icon: "📅", href: "/calendar" },
+  { id: "movers", label: "Market Movers", icon: "📈", href: "/movers" },
   { id: "liquidity", label: "Liquidity", icon: "💧", href: "/liquidity" },
   { id: "journal", label: "Journal", icon: "📓", href: "/journal" },
 ];
@@ -18,8 +23,10 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const { collapsed, toggle } = useSidebar();
   const { theme } = useTheme();
+  const { mode, setMode, modeLabel, modeIcon } = useTradingMode();
   const [user, setUser] = useState<User | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showMode, setShowMode] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -103,8 +110,94 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Bottom: settings + profile */}
+        {/* Bottom: mode + settings + profile */}
         <div className="p-2 space-y-1" style={{ borderTop: `1px solid ${theme.border}` }}>
+          {/* Trading mode selector */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMode(!showMode)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all"
+              style={{
+                background: showMode ? `${theme.accent}1a` : "transparent",
+                color: showMode ? theme.accent : theme.textDim,
+              }}
+              title={collapsed ? `Mode: ${modeLabel}` : undefined}
+            >
+              <span className="text-base w-5 h-5 leading-5 text-center shrink-0 grow-0">
+                {modeIcon}
+              </span>
+              {!collapsed && (
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: theme.textDim }}>
+                    Mode
+                  </div>
+                  <div className="text-sm font-medium truncate" style={{ color: theme.text }}>
+                    {modeLabel}
+                  </div>
+                </div>
+              )}
+              {!collapsed && (
+                <span className="text-xs shrink-0" style={{ color: theme.textDim }}>
+                  ▾
+                </span>
+              )}
+            </button>
+
+            {showMode && (
+              <>
+                <div
+                  className="fixed inset-0 z-50"
+                  onClick={() => setShowMode(false)}
+                />
+                <div
+                  className="absolute z-50 bottom-full mb-2 rounded-xl shadow-xl overflow-hidden"
+                  style={{
+                    left: collapsed ? "100%" : 0,
+                    marginLeft: collapsed ? 8 : 0,
+                    width: collapsed ? 200 : "100%",
+                    background: theme.panelBg,
+                    border: `1px solid ${theme.border}`,
+                  }}
+                >
+                  <div
+                    className="px-3 py-2 text-[10px] uppercase tracking-wide font-semibold"
+                    style={{
+                      color: theme.textDim,
+                      borderBottom: `1px solid ${theme.border}`,
+                    }}
+                  >
+                    Trading Mode
+                  </div>
+                  {TRADING_MODES.map((m) => {
+                    const active = mode === m.key;
+                    return (
+                      <button
+                        key={m.key}
+                        onClick={() => {
+                          setMode(m.key);
+                          setShowMode(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors text-left"
+                        style={{
+                          background: active ? `${theme.accent}1a` : "transparent",
+                          color: active ? theme.accent : theme.text,
+                        }}
+                      >
+                        <span className="text-base w-5 text-center shrink-0">
+                          {m.icon}
+                        </span>
+                        <span className="flex-1">{m.label}</span>
+                        {active && (
+                          <span className="text-xs">✓</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
           <Link
             href="/settings"
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all"

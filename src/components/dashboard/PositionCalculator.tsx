@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   INSTRUMENTS,
   type AssetClass,
   type Instrument,
 } from "@/lib/positionCalc";
+import { useTradingMode } from "@/components/providers/TradingModeProvider";
 
 const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
   futures: "Index Futures",
@@ -30,17 +31,34 @@ function formatUsd(n: number): string {
 }
 
 export default function PositionCalculator() {
+  const { mode } = useTradingMode();
   const [symbol, setSymbol] = useState<string>("NQ");
   const instrument: Instrument =
     INSTRUMENTS.find((i) => i.symbol === symbol) ?? INSTRUMENTS[0];
 
+  const visibleClasses = useMemo<AssetClass[]>(
+    () =>
+      mode === "all"
+        ? ASSET_CLASS_ORDER
+        : (ASSET_CLASS_ORDER.filter((ac) => ac === mode) as AssetClass[]),
+    [mode]
+  );
+
   const grouped = useMemo(() => {
-    return ASSET_CLASS_ORDER.map((ac) => ({
+    return visibleClasses.map((ac) => ({
       assetClass: ac,
       label: ASSET_CLASS_LABELS[ac],
       items: INSTRUMENTS.filter((i) => i.assetClass === ac),
     }));
-  }, []);
+  }, [visibleClasses]);
+
+  // If active symbol no longer matches the visible classes, snap to first in list.
+  useEffect(() => {
+    if (!visibleClasses.includes(instrument.assetClass)) {
+      const first = INSTRUMENTS.find((i) => visibleClasses.includes(i.assetClass));
+      if (first) setSymbol(first.symbol);
+    }
+  }, [visibleClasses, instrument.assetClass]);
 
   const [riskAmount, setRiskAmount] = useState("");
   const [stopPoints, setStopPoints] = useState("");

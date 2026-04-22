@@ -1,6 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useTradingMode,
+  type TradingMode,
+} from "@/components/providers/TradingModeProvider";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -28,6 +32,7 @@ interface InstrumentOption {
   key: string;
   label: string;
   symbol: string;
+  assetClass: Exclude<TradingMode, "all">;
 }
 
 /* ------------------------------------------------------------------ */
@@ -35,12 +40,12 @@ interface InstrumentOption {
 /* ------------------------------------------------------------------ */
 
 const INSTRUMENTS: InstrumentOption[] = [
-  { key: "NAS100",  label: "NAS100",   symbol: "NQ%3DF" },
-  { key: "SPX",     label: "S&P 500",  symbol: "ES%3DF" },
-  { key: "EURUSD",  label: "EUR/USD",  symbol: "EURUSD%3DX" },
-  { key: "GBPUSD",  label: "GBP/USD",  symbol: "GBPUSD%3DX" },
-  { key: "BTC",     label: "BTC/USD",  symbol: "BTC-USD" },
-  { key: "GOLD",    label: "Gold",     symbol: "GC%3DF" },
+  { key: "NAS100",  label: "NAS100",   symbol: "NQ%3DF",        assetClass: "futures" },
+  { key: "SPX",     label: "S&P 500",  symbol: "ES%3DF",        assetClass: "futures" },
+  { key: "EURUSD",  label: "EUR/USD",  symbol: "EURUSD%3DX",    assetClass: "forex" },
+  { key: "GBPUSD",  label: "GBP/USD",  symbol: "GBPUSD%3DX",    assetClass: "forex" },
+  { key: "BTC",     label: "BTC/USD",  symbol: "BTC-USD",       assetClass: "crypto" },
+  { key: "GOLD",    label: "Gold",     symbol: "GC%3DF",        assetClass: "commodities" },
 ];
 
 const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
@@ -183,6 +188,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 /* ------------------------------------------------------------------ */
 
 export default function LiquidityHeatmap() {
+  const { mode } = useTradingMode();
   const [selected, setSelected] = useState("NAS100");
   const [menuOpen, setMenuOpen] = useState(false);
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -192,7 +198,23 @@ export default function LiquidityHeatmap() {
   const btnRef = useRef<HTMLButtonElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const instrument = INSTRUMENTS.find((i) => i.key === selected)!;
+  const visibleInstruments = useMemo(
+    () =>
+      mode === "all"
+        ? INSTRUMENTS
+        : INSTRUMENTS.filter((i) => i.assetClass === mode),
+    [mode]
+  );
+
+  // Snap selection into the visible set when mode changes.
+  useEffect(() => {
+    if (!visibleInstruments.some((i) => i.key === selected) && visibleInstruments[0]) {
+      setSelected(visibleInstruments[0].key);
+    }
+  }, [visibleInstruments, selected]);
+
+  const instrument =
+    INSTRUMENTS.find((i) => i.key === selected) ?? visibleInstruments[0] ?? INSTRUMENTS[0];
 
   // Fetch data
   const fetchData = useCallback(async (showLoading = true) => {
@@ -287,7 +309,7 @@ export default function LiquidityHeatmap() {
 
           {menuOpen && (
             <div className="absolute top-[calc(100%+4px)] left-0 bg-[#1e293b] border border-[#334155] rounded-md min-w-[160px] z-50 overflow-hidden">
-              {INSTRUMENTS.map((opt) => (
+              {visibleInstruments.map((opt) => (
                 <div
                   key={opt.key}
                   onClick={() => {
