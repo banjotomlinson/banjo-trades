@@ -1,7 +1,7 @@
 import Sidebar from "@/components/layout/Sidebar";
 import ThemeProvider from "@/components/providers/ThemeProvider";
-import ProfileProvider from "@/components/providers/ProfileProvider";
 import SidebarProvider from "@/components/providers/SidebarProvider";
+import TradingModeProvider from "@/components/providers/TradingModeProvider";
 import DashboardMain from "@/components/layout/DashboardMain";
 
 export default function DashboardLayout({
@@ -11,14 +11,14 @@ export default function DashboardLayout({
 }) {
   return (
     <ThemeProvider>
-      <ProfileProvider>
+      <TradingModeProvider>
         <SidebarProvider>
           <div className="flex min-h-screen">
             <Sidebar />
             <DashboardMain>{children}</DashboardMain>
           </div>
         </SidebarProvider>
-      </ProfileProvider>
+      </TradingModeProvider>
     </ThemeProvider>
   );
 }

@@ -52,7 +52,6 @@ export default function CountdownBar({
   const [isImminent, setIsImminent] = useState(false);
   const rafRef = useRef<number | null>(null);
 
-  // Fetch events from API if none provided via props
   useEffect(() => {
     if (propEvents) {
       setEvents(propEvents);
@@ -96,7 +95,7 @@ export default function CountdownBar({
 
     if (upcoming.length === 0) {
       setEventName("No upcoming high-impact events");
-      setCountdown("\u2014");
+      setCountdown("—");
       setEventTime("");
       setIsImminent(false);
       return;
@@ -126,9 +125,7 @@ export default function CountdownBar({
   }, [tick]);
 
   return (
-    <div
-      className="flex items-center justify-between rounded-xl border border-[#1e293b] bg-[#111827] px-6 py-5"
-    >
+    <div className="flex items-center justify-between rounded-xl border border-[#1e293b] bg-[#111827] px-6 py-5">
       <div>
         <div className="text-[13px] font-semibold uppercase tracking-wide text-[#64748b]">
           Next High-Impact Event
