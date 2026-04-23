@@ -77,9 +77,7 @@ async function fetchCandles(ticker: string, tf: string): Promise<Candle[]> {
   if (tf === "1h") { interval = "1h"; range = "1mo"; }
   else { interval = "1d"; range = "1y"; }
 
-  const url = `https://corsproxy.io/?${encodeURIComponent(
-    `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${interval}&range=${range}`
-  )}`;
+  const url = `/api/yahoo?symbol=${encodeURIComponent(ticker)}&interval=${interval}&range=${range}`;
 
   const res = await fetch(url);
   const json = await res.json();
@@ -452,7 +450,13 @@ export default function MarketsSnapshot() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const [session, setSession] = useState<MarketSession>(getMarketSession);
+  // Start with a stable placeholder so SSR and first client render agree —
+  // prevents React #418 hydration mismatch when the server and client tick
+  // across a session boundary. The real session is computed in useEffect.
+  const [session, setSession] = useState<MarketSession>({
+    label: "",
+    badgeClass: "closed",
+  });
   const cacheTs = useRef(0);
 
   const loadSnapshot = useCallback(async () => {
@@ -510,8 +514,10 @@ export default function MarketsSnapshot() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update session badge every 60s
+  // Update session badge every 60s (and set the real value on first mount
+  // — see the stable placeholder in the useState initializer above).
   useEffect(() => {
+    setSession(getMarketSession());
     const interval = setInterval(() => setSession(getMarketSession()), 60_000);
     return () => clearInterval(interval);
   }, []);
@@ -521,7 +527,7 @@ export default function MarketsSnapshot() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">
-          {session.label} Bias &#8212; ICT / SMC
+          {session.label ? `${session.label} Bias` : "Bias"} &#8212; ICT / SMC
         </span>
         <div className="flex items-center gap-2.5">
           {updatedAt && (
@@ -531,11 +537,13 @@ export default function MarketsSnapshot() {
               {updatedAt.getMinutes().toString().padStart(2, "0")}
             </span>
           )}
-          <span
-            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${BADGE_STYLES[session.badgeClass]}`}
-          >
-            {session.label.toUpperCase()}
-          </span>
+          {session.label && (
+            <span
+              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${BADGE_STYLES[session.badgeClass]}`}
+            >
+              {session.label.toUpperCase()}
+            </span>
+          )}
         </div>
       </div>
 

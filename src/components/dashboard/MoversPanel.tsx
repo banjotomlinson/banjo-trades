@@ -58,6 +58,7 @@ const INSTRUMENTS: Record<AssetClass, Instrument[]> = {
 };
 
 const ALL_CLASSES: AssetClass[] = ["futures", "commodities", "crypto", "forex"];
+const MAX_DAYS_BACK = 364;
 
 const CLASS_BADGE: Record<AssetClass, { label: string; className: string }> = {
   futures: { label: "FUT", className: "bg-amber-500/15 text-amber-400" },
@@ -67,6 +68,14 @@ const CLASS_BADGE: Record<AssetClass, { label: string; className: string }> = {
 };
 
 const POLL_MS = 5 * 60 * 1000;
+
+interface Series {
+  // Unix seconds per daily bar, ascending.
+  timestamps: number[];
+  closes: (number | null)[];
+}
+
+type ClassSeries = Record<string, Series>;
 
 interface Move {
   symbol: string;
@@ -79,42 +88,64 @@ interface Move {
   changeAbs: number;
 }
 
-async function fetchDailyMove(inst: Instrument): Promise<Move | null> {
-  const url = `https://corsproxy.io/?${encodeURIComponent(
-    `https://query1.finance.yahoo.com/v8/finance/chart/${inst.symbol}?interval=1d&range=5d`
-  )}`;
+async function fetchSeries(inst: Instrument): Promise<Series | null> {
+  const url = `/api/yahoo?symbol=${encodeURIComponent(inst.symbol)}&interval=1d&range=1y`;
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
     const json = await res.json();
     const result = json.chart?.result?.[0];
+    const timestamps: number[] = result?.timestamp ?? [];
     const closes: (number | null)[] =
       result?.indicators?.quote?.[0]?.close ?? [];
-    let last: number | null = null;
-    let prev: number | null = null;
-    for (let i = closes.length - 1; i >= 0; i--) {
-      const v = closes[i];
-      if (v == null) continue;
-      if (last == null) last = v;
-      else {
-        prev = v;
-        break;
-      }
-    }
-    if (last == null || prev == null || prev === 0) return null;
-    return {
-      symbol: inst.symbol,
-      name: inst.name,
-      sub: inst.sub,
-      decimals: inst.decimals,
-      assetClass: inst.assetClass,
-      price: last,
-      changePct: ((last - prev) / prev) * 100,
-      changeAbs: last - prev,
-    };
+    if (timestamps.length === 0 || closes.length === 0) return null;
+    return { timestamps, closes };
   } catch {
     return null;
   }
+}
+
+// Given a series and a target end-of-day timestamp (ms), return the move:
+// the latest close at/before target, and the close of the bar before that.
+function moveFromSeries(
+  series: Series,
+  inst: Instrument,
+  targetMs: number
+): Move | null {
+  const targetSec = Math.floor(targetMs / 1000);
+  // Find the latest bar whose timestamp is <= targetSec.
+  let idx = -1;
+  for (let i = series.timestamps.length - 1; i >= 0; i--) {
+    if (series.timestamps[i] <= targetSec) {
+      idx = i;
+      break;
+    }
+  }
+  if (idx === -1) return null;
+
+  // Walk back from idx to collect the last two non-null closes.
+  let last: number | null = null;
+  let prev: number | null = null;
+  for (let i = idx; i >= 0; i--) {
+    const v = series.closes[i];
+    if (v == null) continue;
+    if (last == null) last = v;
+    else {
+      prev = v;
+      break;
+    }
+  }
+  if (last == null || prev == null || prev === 0) return null;
+  return {
+    symbol: inst.symbol,
+    name: inst.name,
+    sub: inst.sub,
+    decimals: inst.decimals,
+    assetClass: inst.assetClass,
+    price: last,
+    changePct: ((last - prev) / prev) * 100,
+    changeAbs: last - prev,
+  };
 }
 
 function fmt(n: number, d: number): string {
@@ -126,13 +157,18 @@ function fmt(n: number, d: number): string {
 
 export default function MoversPanel() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("all");
-  const [dataByClass, setDataByClass] = useState<Record<AssetClass, Move[]>>({
-    futures: [],
-    commodities: [],
-    crypto: [],
-    forex: [],
+  const [dateOffset, setDateOffset] = useState(0); // days back from today
+  const [seriesByClass, setSeriesByClass] = useState<
+    Record<AssetClass, ClassSeries>
+  >({
+    futures: {},
+    commodities: {},
+    crypto: {},
+    forex: {},
   });
-  const [loadingByClass, setLoadingByClass] = useState<Record<AssetClass, boolean>>({
+  const [loadingByClass, setLoadingByClass] = useState<
+    Record<AssetClass, boolean>
+  >({
     futures: true,
     commodities: true,
     crypto: true,
@@ -141,13 +177,17 @@ export default function MoversPanel() {
 
   const loadClass = useCallback(async (cls: AssetClass) => {
     setLoadingByClass((s) => ({ ...s, [cls]: true }));
-    const results = await Promise.all(INSTRUMENTS[cls].map(fetchDailyMove));
-    const clean = results.filter((r): r is Move => r !== null);
-    setDataByClass((s) => ({ ...s, [cls]: clean }));
+    const insts = INSTRUMENTS[cls];
+    const results = await Promise.all(insts.map(fetchSeries));
+    const next: ClassSeries = {};
+    results.forEach((r, i) => {
+      if (r) next[insts[i].symbol] = r;
+    });
+    setSeriesByClass((s) => ({ ...s, [cls]: next }));
     setLoadingByClass((s) => ({ ...s, [cls]: false }));
   }, []);
 
-  // Load the classes the active tab needs, then poll them every 5 minutes.
+  // Fetch series for the active tab's classes on mount/tab change, + poll.
   useEffect(() => {
     const classes: AssetClass[] =
       activeTab === "all" ? ALL_CLASSES : [activeTab];
@@ -156,19 +196,50 @@ export default function MoversPanel() {
     return () => clearInterval(id);
   }, [activeTab, loadClass]);
 
+  // Target date = today - dateOffset, end of that day (local).
+  const { targetMs, dateLabel } = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - dateOffset);
+    const label =
+      dateOffset === 0
+        ? "Today"
+        : d.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year:
+              d.getFullYear() !== new Date().getFullYear()
+                ? "numeric"
+                : undefined,
+          });
+    d.setHours(23, 59, 59, 999);
+    return { targetMs: d.getTime(), dateLabel: label };
+  }, [dateOffset]);
+
+  // Compute moves for the active tab at the target date.
   const moves = useMemo<Move[]>(() => {
-    if (activeTab === "all") {
-      return ALL_CLASSES.flatMap((c) => dataByClass[c]);
+    const classes: AssetClass[] =
+      activeTab === "all" ? ALL_CLASSES : [activeTab];
+    const out: Move[] = [];
+    for (const cls of classes) {
+      for (const inst of INSTRUMENTS[cls]) {
+        const s = seriesByClass[cls][inst.symbol];
+        if (!s) continue;
+        const m = moveFromSeries(s, inst, targetMs);
+        if (m) out.push(m);
+      }
     }
-    return dataByClass[activeTab];
-  }, [activeTab, dataByClass]);
+    return out;
+  }, [activeTab, seriesByClass, targetMs]);
 
   const loading =
     activeTab === "all"
-      ? ALL_CLASSES.every((c) => loadingByClass[c] && dataByClass[c].length === 0)
-      : loadingByClass[activeTab];
+      ? ALL_CLASSES.every(
+          (c) => loadingByClass[c] && Object.keys(seriesByClass[c]).length === 0
+        )
+      : loadingByClass[activeTab] &&
+        Object.keys(seriesByClass[activeTab]).length === 0;
 
-  // Biggest absolute mover for the header card.
   const topMover = useMemo(() => {
     if (moves.length === 0) return null;
     return [...moves].sort(
@@ -176,7 +247,6 @@ export default function MoversPanel() {
     )[0];
   }, [moves]);
 
-  // Full list, sorted by absolute move desc.
   const sortedMoves = useMemo(
     () =>
       [...moves].sort(
@@ -191,6 +261,9 @@ export default function MoversPanel() {
     ? "from-green-500/10 to-transparent"
     : "from-red-500/10 to-transparent";
   const arrow = topPositive ? "▲" : "▼";
+
+  const shiftDay = (delta: number) =>
+    setDateOffset((d) => Math.min(MAX_DAYS_BACK, Math.max(0, d + delta)));
 
   return (
     <div className="bg-[#111827] border border-[#1e293b] rounded-xl overflow-hidden">
@@ -216,14 +289,69 @@ export default function MoversPanel() {
         </div>
       </div>
 
+      {/* Date navigator */}
+      <div className="flex items-center gap-2 flex-wrap px-5 py-3 border-b border-[#1e293b] bg-[#0f172a]">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748b] mr-1">
+          Date
+        </span>
+        <button
+          onClick={() => shiftDay(1)}
+          className="bg-[#111827] border border-[#1e293b] rounded-md px-2.5 py-1 text-xs text-[#e2e8f0] hover:border-[#64748b] transition-colors"
+          title="Previous day"
+          style={{
+            opacity: dateOffset >= MAX_DAYS_BACK ? 0.3 : 1,
+            pointerEvents: dateOffset >= MAX_DAYS_BACK ? "none" : "auto",
+          }}
+        >
+          ←
+        </button>
+        <span className="text-[13px] font-semibold text-[#e2e8f0] min-w-[160px] text-center tabular-nums">
+          {dateLabel}
+        </span>
+        <button
+          onClick={() => shiftDay(-1)}
+          className="bg-[#111827] border border-[#1e293b] rounded-md px-2.5 py-1 text-xs text-[#e2e8f0] hover:border-[#64748b] transition-colors"
+          title="Next day"
+          style={{
+            opacity: dateOffset <= 0 ? 0.3 : 1,
+            pointerEvents: dateOffset <= 0 ? "none" : "auto",
+          }}
+        >
+          →
+        </button>
+        <button
+          onClick={() => setDateOffset(0)}
+          className="border border-accent text-accent px-3 py-1 rounded-md text-xs font-semibold hover:bg-accent hover:text-white transition-all ml-1"
+          style={{ opacity: dateOffset === 0 ? 0.5 : 1 }}
+        >
+          Today
+        </button>
+        <span className="flex-1" />
+        {/* Quick jumps */}
+        {[7, 30, 90].map((n) => (
+          <button
+            key={n}
+            onClick={() => setDateOffset(n)}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
+              dateOffset === n
+                ? "bg-accent text-white border-transparent"
+                : "border-[#1e293b] text-[#64748b] hover:text-[#e2e8f0] hover:border-[#64748b]"
+            }`}
+          >
+            -{n}d
+          </button>
+        ))}
+      </div>
+
       {/* Top Mover card */}
       <div
         className={`relative px-6 py-5 border-b border-[#1e293b] bg-gradient-to-r ${topBg}`}
       >
         <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748b] mb-2">
           {activeTab === "all"
-            ? "Top Mover of the Day"
-            : `${ASSET_CLASSES.find((a) => a.key === activeTab)?.label} of the Day`}
+            ? "Top Mover"
+            : `${ASSET_CLASSES.find((a) => a.key === activeTab)?.label} Top Mover`}{" "}
+          <span className="text-[#475569] ml-1">· {dateLabel}</span>
         </div>
         {loading && !topMover ? (
           <div className="text-[#64748b] text-sm">Loading...</div>
@@ -259,7 +387,7 @@ export default function MoversPanel() {
             </div>
           </div>
         ) : (
-          <div className="text-[#64748b] text-sm">No data available</div>
+          <div className="text-[#64748b] text-sm">No data for this date</div>
         )}
       </div>
 
@@ -275,7 +403,7 @@ export default function MoversPanel() {
           <div className="p-8 text-center text-[#64748b] text-sm">Loading...</div>
         ) : sortedMoves.length === 0 ? (
           <div className="p-8 text-center text-[#64748b] text-sm">
-            No data available
+            No data for this date
           </div>
         ) : (
           sortedMoves.map((m) => {
