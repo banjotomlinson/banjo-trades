@@ -123,16 +123,22 @@ async function upsertRow(
 ) {
   const supa = getServiceClient();
   if (!supa) return; // no service role — skip cache write (dev without backend keys)
-  await supa.from("market_candles").upsert(
-    {
-      symbol,
-      interval,
-      range,
-      payload,
-      fetched_at: new Date().toISOString(),
-    },
-    { onConflict: "symbol,interval,range" }
-  );
+  // Swallow errors: if the migration hasn't been run yet or the table is
+  // missing, we still want the API to succeed via direct Yahoo fetch.
+  try {
+    await supa.from("market_candles").upsert(
+      {
+        symbol,
+        interval,
+        range,
+        payload,
+        fetched_at: new Date().toISOString(),
+      },
+      { onConflict: "symbol,interval,range" }
+    );
+  } catch {
+    // cache write failure shouldn't break the request
+  }
 }
 
 async function readRow(
@@ -142,14 +148,19 @@ async function readRow(
 ): Promise<CacheRow | null> {
   const supa = getServiceClient();
   if (!supa) return null;
-  const { data } = await supa
-    .from("market_candles")
-    .select("symbol, interval, range, payload, fetched_at")
-    .eq("symbol", symbol)
-    .eq("interval", interval)
-    .eq("range", range)
-    .maybeSingle();
-  return (data as CacheRow | null) ?? null;
+  try {
+    const { data, error } = await supa
+      .from("market_candles")
+      .select("symbol, interval, range, payload, fetched_at")
+      .eq("symbol", symbol)
+      .eq("interval", interval)
+      .eq("range", range)
+      .maybeSingle();
+    if (error) return null;
+    return (data as CacheRow | null) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function isFresh(fetchedAt: string, interval: string): boolean {
