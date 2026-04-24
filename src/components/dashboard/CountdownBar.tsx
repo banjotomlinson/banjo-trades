@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useCalendarFilter } from "@/components/providers/CalendarFilterProvider";
 
 interface CalendarEvent {
   title: string;
   date: Date;
   impact: string;
-  currency?: string;
+  country?: string;
 }
 
 interface CountdownBarProps {
   events?: CalendarEvent[];
   apiEndpoint?: string;
-  currency?: string;
 }
 
 function formatCountdown(diff: number): string {
@@ -43,8 +43,14 @@ function formatEventTime(date: Date): string {
 export default function CountdownBar({
   events: propEvents,
   apiEndpoint = "/api/calendar",
-  currency = "ALL",
 }: CountdownBarProps) {
+  const { matches, selection } = useCalendarFilter();
+  const filterLabel =
+    selection === "all"
+      ? "All currencies"
+      : selection.length === 1
+        ? selection[0]
+        : selection.join(" · ");
   const [events, setEvents] = useState<CalendarEvent[]>(propEvents ?? []);
   const [countdown, setCountdown] = useState("--:--:--");
   const [eventName, setEventName] = useState("Loading...");
@@ -66,7 +72,7 @@ export default function CountdownBar({
         const data = await res.json();
         if (cancelled) return;
         const parsed = (data.events ?? data ?? []).map(
-          (e: { title: string; date: string; impact: string; currency?: string }) => ({
+          (e: { title: string; date: string; impact: string; country?: string }) => ({
             ...e,
             date: new Date(e.date),
           })
@@ -89,12 +95,12 @@ export default function CountdownBar({
         (e) =>
           e.impact === "high" &&
           e.date > now &&
-          (currency === "ALL" || !e.currency || e.currency === currency)
+          (!e.country || matches(e.country))
       )
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
     if (upcoming.length === 0) {
-      setEventName("No upcoming high-impact events");
+      setEventName("Nothing soon");
       setCountdown("—");
       setEventTime("");
       setIsImminent(false);
@@ -115,7 +121,7 @@ export default function CountdownBar({
     setCountdown(formatCountdown(diff));
     setIsImminent(diff < 300000); // 5 minutes
     rafRef.current = requestAnimationFrame(tick);
-  }, [events, currency]);
+  }, [events, matches]);
 
   useEffect(() => {
     tick();
@@ -129,6 +135,9 @@ export default function CountdownBar({
       <div>
         <div className="text-[13px] font-semibold uppercase tracking-wide text-[#64748b]">
           Next High-Impact Event
+          <span className="ml-2 text-[10px] font-medium normal-case tracking-normal text-[#475569]">
+            · {filterLabel}
+          </span>
         </div>
         <div className="mt-1 text-lg font-bold text-white">{eventName}</div>
       </div>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/data";
 import { biasForEvent, summarizeDay, type Bias } from "@/lib/eventBias";
+import { useCalendarFilter } from "@/components/providers/CalendarFilterProvider";
 
 function ymd(d: Date): string {
   const y = d.getFullYear();
@@ -85,35 +86,25 @@ export default function EconomicCalendar({
   const [loading, setLoading] = useState(!hasInitial);
   const [dateOffset, setDateOffset] = useState(0);
 
-  // Currency multi-select. "all" = unfiltered. Seeds from `category` when
-  // provided (dashboard embeds), otherwise "all" (calendar page).
-  const [currencySelection, setCurrencySelection] = useState<
-    "all" | Set<string>
-  >(() => {
-    if (category) {
-      const cats = CATEGORY_CURRENCIES[category];
-      if (cats === "all") return "all";
-      return new Set(cats);
-    }
-    return "all";
-  });
+  // Currency multi-select lives in a dashboard-scoped provider so the
+  // countdown on the home page can filter by the same selection.
+  const {
+    selection: currencySelection,
+    setSelection: setCurrencySelection,
+    toggleCurrency,
+    matches: matchesCategory,
+  } = useCalendarFilter();
 
-  const matchesCategory = useCallback(
-    (country: string) =>
-      currencySelection === "all" ? true : currencySelection.has(country),
-    [currencySelection]
-  );
-
-  const toggleCurrency = useCallback((c: string) => {
-    setCurrencySelection((prev) => {
-      if (prev === "all") return new Set([c]);
-      const next = new Set(prev);
-      if (next.has(c)) next.delete(c);
-      else next.add(c);
-      if (next.size === 0) return "all";
-      return next;
-    });
-  }, []);
+  // When the parent embeds this calendar with a fixed category, seed the
+  // provider on first mount so the user arrives pre-filtered (but is then
+  // free to widen the selection).
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !category) return;
+    seededRef.current = true;
+    const cats = CATEGORY_CURRENCIES[category];
+    setCurrencySelection(cats === "all" ? "all" : [...cats]);
+  }, [category, setCurrencySelection]);
 
   const availableCurrencies = useMemo(() => {
     // Always expose the top 10 so the picker is stable even before events load.
@@ -310,7 +301,7 @@ export default function EconomicCalendar({
           </button>
           {availableCurrencies.map((c) => {
             const active =
-              currencySelection !== "all" && currencySelection.has(c);
+              currencySelection !== "all" && currencySelection.includes(c);
             return (
               <button
                 key={c}
