@@ -527,7 +527,10 @@ function MonthGrid({
         const col = i % 7;
         const row = Math.floor(i / 7);
         const tipSide = col >= 4 ? "right-0" : "left-0";
-        const tipVert = row >= 3 ? "bottom-full mb-1" : "top-full mt-1";
+        // Tooltip touches the cell edge (no margin gap) so the cursor can
+        // travel from cell to tooltip without leaving either, which would
+        // otherwise drop the group-hover state.
+        const tipVert = row >= 3 ? "bottom-full" : "top-full";
 
         return (
           <div
@@ -586,7 +589,7 @@ function MonthGrid({
 
             {hasEvents && (
               <div
-                className={`pointer-events-none absolute ${tipVert} ${tipSide} w-[320px] z-50 opacity-0 group-hover:opacity-100 transition-opacity bg-panel border border-border rounded-lg shadow-xl p-3 text-left`}
+                className={`invisible opacity-0 group-hover:visible group-hover:opacity-100 hover:visible hover:opacity-100 absolute ${tipVert} ${tipSide} w-[320px] z-50 transition-opacity bg-panel border border-border rounded-lg shadow-xl p-3 text-left`}
               >
                 <div className="flex items-center justify-between mb-2 pb-2 border-b border-border">
                   <div className="text-xs font-semibold text-foreground">
