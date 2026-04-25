@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { id: "seasonality", label: "Seasonality", icon: "🍂", href: "/seasonality" },
   { id: "liquidity", label: "Liquidity", icon: "💧", href: "/liquidity" },
   { id: "journal", label: "Journal", icon: "📓", href: "/journal" },
+  { id: "feedback", label: "Feedback", icon: "💬", href: "/feedback" },
 ];
 
 export default function Sidebar() {
