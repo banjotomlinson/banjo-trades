@@ -30,7 +30,18 @@ function formatUsd(n: number): string {
   })}`;
 }
 
-export default function PositionCalculator() {
+interface PositionCalculatorProps {
+  embedded?: boolean;
+}
+
+function openPopout() {
+  // Sized so it fits next to a TradingView chart on a typical 1080p monitor.
+  const features = "popup=yes,width=440,height=720,resizable=yes,scrollbars=yes";
+  const w = window.open("/popouts/calculator", "banjoCalc", features);
+  if (w) w.focus();
+}
+
+export default function PositionCalculator({ embedded = false }: PositionCalculatorProps = {}) {
   const { mode } = useTradingMode();
   const [symbol, setSymbol] = useState<string>("NQ");
   const instrument: Instrument =
@@ -78,13 +89,40 @@ export default function PositionCalculator() {
 
   return (
     <div className="bg-panel border border-border rounded-xl overflow-hidden">
-      <div className="px-5 py-4 border-b border-border">
-        <h2 className="text-base font-semibold text-foreground">
-          Position Calculator
-        </h2>
-        <p className="text-xs text-muted mt-0.5">
-          Size your trade by risk amount and stop distance in points.
-        </p>
+      <div className="px-5 py-4 border-b border-border flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">
+            Position Calculator
+          </h2>
+          <p className="text-xs text-muted mt-0.5">
+            Size your trade by risk amount and stop distance in points.
+          </p>
+        </div>
+        {!embedded && (
+          <button
+            onClick={openPopout}
+            title="Pop out into a separate window"
+            aria-label="Pop out calculator"
+            className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted hover:text-foreground border border-border hover:border-muted rounded-md px-2.5 py-1.5 transition-colors"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M14 4h6v6" />
+              <path d="M20 4l-8 8" />
+              <path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5" />
+            </svg>
+            Pop out
+          </button>
+        )}
       </div>
 
       <div className="p-5 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-5">
