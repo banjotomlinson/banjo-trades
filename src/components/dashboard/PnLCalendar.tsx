@@ -245,21 +245,21 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
               className={`relative border-r border-b border-border/60 min-h-[96px] p-2 text-left ${tint} ${
                 !inMonth ? "opacity-30" : ""
               } ${
+                isToday ? "bg-accent/10 ring-2 ring-inset ring-accent" : ""
+              } ${
                 clickable
                   ? "cursor-pointer hover:bg-white/[0.03] transition-colors"
                   : "cursor-default"
               }`}
             >
               <div className="flex items-center">
-                {isToday ? (
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent text-white text-xs font-bold">
-                    {d.getDate()}
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted font-medium">
-                    {d.getDate()}
-                  </span>
-                )}
+                <span
+                  className={`text-xs font-bold ${
+                    isToday ? "text-accent" : "text-muted font-medium"
+                  }`}
+                >
+                  {d.getDate()}
+                </span>
               </div>
 
               {isSaturday && inMonth && weekInfo ? (
