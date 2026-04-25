@@ -82,7 +82,7 @@ export default function Sidebar() {
           </button>
           {!collapsed && (
             <span className="ml-3 text-base font-bold whitespace-nowrap" style={{ color: theme.text }}>
-              Banjo <span style={{ color: theme.accent }}>Trades</span>
+              Trader<span style={{ color: theme.accent }}>M8</span>
             </span>
           )}
         </div>

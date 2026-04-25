@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Banjo Trades",
-  description: "Trading dashboard and analysis toolkit",
+  title: "TraderM8",
+  description: "Your mate of the market — trading dashboard and analysis toolkit",
 };
 
 export default function RootLayout({

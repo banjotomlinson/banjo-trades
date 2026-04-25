@@ -28,10 +28,10 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            Banjo <span className="text-[#3b82f6]">Trades</span>
+            Trader<span className="text-[#3b82f6]">M8</span>
           </h1>
           <p className="text-[#64748b] text-sm mt-2">
-            Trading dashboard &amp; analysis toolkit
+            Your mate of the market
           </p>
         </div>
 
