@@ -14,7 +14,17 @@ interface PnLCalendarProps {
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+const MONTH_NAMES_FULL = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 const STORAGE_KEY = "banjo-pnl-trades-v1";
+
+type View = "monthly" | "yearly";
 
 function ymd(d: Date): string {
   const y = d.getFullYear();
@@ -41,6 +51,7 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
   const [cursor, setCursor] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
+  const [view, setView] = useState<View>("monthly");
   const [localTrades, setLocalTrades] = useState<Trade[]>([]);
   const [editingDate, setEditingDate] = useState<string | null>(null);
 
@@ -130,22 +141,55 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
     return total;
   }, [byDay, cursor]);
 
+  // Per-month aggregates for the selected year (used in yearly view).
+  const monthlyTotals = useMemo(() => {
+    const out = Array.from({ length: 12 }, () => ({ pnl: 0, count: 0 }));
+    const yr = cursor.getFullYear();
+    for (const t of trades) {
+      const d = new Date(t.date + "T00:00:00");
+      if (d.getFullYear() !== yr) continue;
+      const m = d.getMonth();
+      out[m].pnl += t.pnl;
+      out[m].count += 1;
+    }
+    return out;
+  }, [trades, cursor]);
+
+  const yearlyPnl = useMemo(
+    () => monthlyTotals.reduce((s, m) => s + m.pnl, 0),
+    [monthlyTotals]
+  );
+
+  const headlinePnl = view === "yearly" ? yearlyPnl : monthlyPnl;
+  const headlineLabel = view === "yearly" ? "Yearly P/L" : "Monthly P/L";
+
   const monthLabel = cursor.toLocaleDateString("en-US", {
     month: "short",
     year: "numeric",
   });
+  const yearLabel = String(cursor.getFullYear());
 
-  const goPrev = () =>
-    setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
-  const goNext = () =>
-    setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
+  const goPrev = () => {
+    if (view === "yearly") {
+      setCursor(new Date(cursor.getFullYear() - 1, cursor.getMonth(), 1));
+    } else {
+      setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
+    }
+  };
+  const goNext = () => {
+    if (view === "yearly") {
+      setCursor(new Date(cursor.getFullYear() + 1, cursor.getMonth(), 1));
+    } else {
+      setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
+    }
+  };
   const goToday = () =>
     setCursor(new Date(today.getFullYear(), today.getMonth(), 1));
 
   const pnlColor =
-    monthlyPnl > 0
+    headlinePnl > 0
       ? "text-bull"
-      : monthlyPnl < 0
+      : headlinePnl < 0
       ? "text-bear"
       : "text-foreground";
 
@@ -165,12 +209,27 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
 
   return (
     <div className="bg-panel border border-border rounded-xl overflow-hidden">
-      <div className="pt-6 pb-4 text-center">
+      <div className="pt-6 pb-4 flex flex-col items-center gap-3">
         <div className="text-base font-medium text-muted">
-          Monthly P/L:{" "}
+          {headlineLabel}:{" "}
           <span className={`text-xl font-bold ${pnlColor}`}>
-            {formatCurrency(monthlyPnl)}
+            {formatCurrency(headlinePnl)}
           </span>
+        </div>
+        <div className="flex bg-background border border-border rounded-md p-0.5">
+          {(["monthly", "yearly"] as View[]).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`px-3 py-1 rounded-[5px] text-xs font-semibold transition-all ${
+                view === v
+                  ? "bg-accent text-white"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -179,17 +238,17 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
           <button
             onClick={goPrev}
             className="w-8 h-8 rounded-md bg-[#1e293b] border border-[#334155] text-muted flex items-center justify-center hover:bg-[#334155] hover:text-white transition-all"
-            aria-label="Previous month"
+            aria-label={view === "yearly" ? "Previous year" : "Previous month"}
           >
             &larr;
           </button>
           <span className="text-sm font-semibold text-foreground min-w-[110px] text-center">
-            {monthLabel}
+            {view === "yearly" ? yearLabel : monthLabel}
           </span>
           <button
             onClick={goNext}
             className="w-8 h-8 rounded-md bg-[#1e293b] border border-[#334155] text-muted flex items-center justify-center hover:bg-[#334155] hover:text-white transition-all"
-            aria-label="Next month"
+            aria-label={view === "yearly" ? "Next year" : "Next month"}
           >
             &rarr;
           </button>
@@ -202,6 +261,61 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
         </button>
       </div>
 
+      {view === "yearly" ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-5 border-t border-border">
+          {monthlyTotals.map((m, i) => {
+            const isCurrentMonth =
+              cursor.getFullYear() === today.getFullYear() &&
+              i === today.getMonth();
+            const tint =
+              m.pnl > 0
+                ? "bg-[#052e16]/80 border-bull/30"
+                : m.pnl < 0
+                ? "bg-[#450a0a]/60 border-bear/30"
+                : "bg-[#0f172a] border-border";
+            const color =
+              m.pnl > 0
+                ? "text-bull"
+                : m.pnl < 0
+                ? "text-bear"
+                : "text-muted";
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => {
+                  setView("monthly");
+                  setCursor(new Date(cursor.getFullYear(), i, 1));
+                }}
+                className={`relative text-left border rounded-lg p-4 transition-colors hover:brightness-125 ${tint} ${
+                  isCurrentMonth ? "ring-2 ring-inset ring-accent" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div
+                    className={`text-[10px] font-bold uppercase tracking-wider ${
+                      isCurrentMonth ? "text-accent" : "text-muted"
+                    }`}
+                  >
+                    {MONTH_NAMES_FULL[i]}
+                  </div>
+                  {m.count > 0 && (
+                    <span className="text-[10px] text-muted/80 tabular-nums">
+                      {m.count} {m.count === 1 ? "trade" : "trades"}
+                    </span>
+                  )}
+                </div>
+                <div className={`text-lg font-bold mt-2 tabular-nums ${color}`}>
+                  {formatCurrency(m.pnl)}
+                </div>
+                <div className="text-[10px] text-muted mt-0.5">
+                  {MONTH_NAMES[i]} {cursor.getFullYear()}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
       <div className="grid grid-cols-7 border-t border-border">
         {WEEKDAYS.map((d) => (
           <div
@@ -293,6 +407,7 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
           );
         })}
       </div>
+      )}
 
       {editingDate && (
         <TradeEditor
