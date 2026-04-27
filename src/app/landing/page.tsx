@@ -30,7 +30,7 @@ export default function LandingPage() {
 // ── Hero — scroll-driven 3D animation ────────────────────────────
 function Hero() {
   return (
-    <section className="relative z-10 px-5 sm:px-8 pt-12 sm:pt-16">
+    <section className="relative z-10 px-5 sm:px-8 pt-2 sm:pt-4">
       <ContainerScroll
         titleComponent={
           <>
