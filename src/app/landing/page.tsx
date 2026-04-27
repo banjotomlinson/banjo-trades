@@ -186,7 +186,7 @@ function Hero() {
       <div className="max-w-6xl mx-auto text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-6">
           <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] animate-pulse" />
-          Closed beta — first 500 lock founder pricing
+          Closed beta — first 100 unlock free-for-life
         </div>
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.05]">
           Trade with <span className="bg-gradient-to-br from-[#60a5fa] via-[#3b82f6] to-[#1d4ed8] bg-clip-text text-transparent">your mate</span>
@@ -214,7 +214,7 @@ function Hero() {
           </a>
         </div>
         <p className="mt-4 text-[11px] text-[#475569]">
-          Free for the first 500 traders · No card required · Lock founder pricing forever
+          Free for life — first 100 traders only · No card required · Paid plans after
         </p>
       </div>
 
@@ -417,7 +417,7 @@ function Coverage() {
         <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card title="Made for retail" body="Not a fund tool dumbed down. Designed from day one for traders sizing $50k prop accounts and personal money." />
           <Card title="Fast over fancy" body="Sub-30s edge cache, shared Supabase data layer — same load whether one user is on it or one thousand." />
-          <Card title="No subscription tax" body="Free tier covers the entire toolkit. Pay once if you want ad-free. Nothing locked behind recurring billing." />
+          <Card title="First 100 free for life" body="Get in before the door closes and you keep every feature, free, forever. Everyone after lands on a fair paid plan." />
         </div>
       </div>
     </section>
@@ -525,7 +525,7 @@ function Waitlist() {
         <SectionHeader
           eyebrow="Closed beta"
           title="Get early access."
-          subtitle="The first 500 traders lock in founder pricing — free forever — and get direct line to feature requests."
+          subtitle="The first 100 traders to join lock in free-for-life access. Everyone else lands on a paid plan when the public launch goes live — so move fast."
         />
         <form
           onSubmit={submit}
@@ -642,11 +642,11 @@ function FAQ() {
   const items = [
     {
       q: "When does it launch?",
-      a: "Closed beta is rolling now. The first 500 waitlist signups get invites in waves. Public launch follows in Q3.",
+      a: "Closed beta is rolling now. The first 100 waitlist signups get invites in waves and lock in free-for-life access. Public launch — with paid plans — follows in Q3.",
     },
     {
       q: "Is it really free?",
-      a: "Yes. The full toolkit is free for waitlist beta users forever. We make money on broker affiliates and an optional ad-free pass.",
+      a: "Yes — for the first 100 traders to grab a waitlist spot. They get every feature, free, locked in for life, no card required. After that we shift to paid plans to keep the lights on. The 100 freebies don't move with the price changes — once you're in, you're in. Move fast.",
     },
     {
       q: "Which brokers does it integrate with?",
