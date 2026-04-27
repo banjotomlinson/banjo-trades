@@ -9,6 +9,12 @@ export interface NewsItem {
   source: string;
   url: string;
   datetime: number;
+  // Set by the filter for UI prioritisation.
+  priority?: "high" | "medium" | "low";
+  score?: number;
+  // Future: set to "tweet" when the Twitter integration lands.
+  kind?: "news" | "tweet";
+  author?: string;
 }
 
 export interface CalendarEvent {
@@ -25,6 +31,7 @@ interface FinnhubNews {
   id: number;
   headline: string;
   source: string;
+  summary?: string;
   url: string;
   datetime: number;
   category: string;
@@ -52,18 +59,33 @@ export async function fetchNews(): Promise<NewsItem[]> {
   if (!apiKey) return [];
 
   try {
+    const { filterAndSort } = await import("@/lib/news/filter");
     const res = await fetch(
       `https://finnhub.io/api/v1/news?category=general&token=${apiKey}`,
       { next: { revalidate: 60 } }
     );
     if (!res.ok) return [];
     const data: FinnhubNews[] = await res.json();
-    return data.slice(0, 30).map((n) => ({
+    const scored = filterAndSort(
+      data.map((n) => ({
+        id: n.id,
+        headline: n.headline,
+        source: n.source,
+        summary: n.summary,
+        url: n.url,
+        datetime: n.datetime,
+        category: n.category,
+      }))
+    );
+    return scored.slice(0, 25).map((n) => ({
       id: n.id,
       headline: n.headline,
       source: n.source,
       url: n.url,
       datetime: n.datetime,
+      priority: n.priority,
+      score: n.score,
+      kind: "news" as const,
     }));
   } catch {
     return [];

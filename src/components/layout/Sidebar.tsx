@@ -14,7 +14,7 @@ import {
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "⊞", href: "/" },
-  { id: "calendar", label: "Calendar", icon: "📅", href: "/calendar" },
+  { id: "calendar", label: "Econ Calendar", icon: "📅", href: "/calendar" },
   { id: "movers", label: "Market Movers", icon: "📈", href: "/movers" },
   { id: "seasonality", label: "Seasonality", icon: "🍂", href: "/seasonality" },
   { id: "liquidity", label: "Liquidity", icon: "💧", href: "/liquidity" },
