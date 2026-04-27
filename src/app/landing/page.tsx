@@ -111,6 +111,7 @@ export default function LandingPage() {
           "Per-plan title, multiple plans, sorted by most recent edit.",
           "Synced to your account across every device you sign in on.",
         ]}
+        image="/landing/planner.png"
         placeholder="planner with trade plan + risk management columns"
         flip
       />
@@ -762,13 +763,15 @@ function Screenshot({
   sub?: string;
 }) {
   if (src) {
+    // Display the screenshot at its natural aspect ratio so the focal
+    // panel is never cropped. The browser frame sits flush around it.
     return (
-      <div className="relative aspect-[16/10] w-full bg-[#0a0e17] overflow-hidden">
+      <div className="relative w-full bg-[#0a0e17]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={alt ?? placeholder}
-          className="w-full h-full object-cover object-top block"
+          className="block w-full h-auto"
           loading="lazy"
         />
       </div>
