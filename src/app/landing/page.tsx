@@ -4,12 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   BgEffects,
-  BrowserFrame,
   Footer,
   Nav,
-  Screenshot,
   SectionHeader,
 } from "./_components";
+import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 
 export default function LandingPage() {
   return (
@@ -28,59 +27,61 @@ export default function LandingPage() {
   );
 }
 
-// ── Hero ──────────────────────────────────────────────────────────
+// ── Hero — scroll-driven 3D animation ────────────────────────────
 function Hero() {
   return (
-    <section className="relative z-10 px-5 sm:px-8 pt-24 pb-20 sm:pt-32 sm:pb-28">
-      <div className="max-w-6xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] animate-pulse" />
-          Closed beta — first 100 unlock free-for-life
-        </div>
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.05]">
-          Trade with your{" "}
-          <span className="bg-gradient-to-br from-[#60a5fa] via-[#3b82f6] to-[#1d4ed8] bg-clip-text text-transparent">
-            M8
-          </span>
-          <br className="hidden sm:block" />
-          <span className="sm:inline"> beside you.</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-[#94a3b8] leading-relaxed">
-          TraderM8 is the trading dashboard built for the way you actually trade.
-          Bias cards, session levels, liquidity heatmaps, a journal that tells
-          the truth, and a position calculator that pops out next to your charts.
-        </p>
-        <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a
-            href="#waitlist"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold px-6 py-3 rounded-md shadow-lg shadow-[#3b82f6]/25 transition-all hover:shadow-[#3b82f6]/40"
-          >
-            Join the waitlist
-            <span aria-hidden>→</span>
-          </a>
-          <Link
-            href="/landing/features"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 text-white text-sm font-semibold px-6 py-3 rounded-md transition-colors"
-          >
-            See every feature in detail
-          </Link>
-        </div>
-        <p className="mt-4 text-[11px] text-[#475569]">
-          Free for life — first 100 traders only · No card required · Paid plans after
-        </p>
-      </div>
-
-      {/* Hero screenshot */}
-      <div className="max-w-6xl mx-auto mt-16">
-        <BrowserFrame label="dashboard">
-          <Screenshot
-            src="/landing/dashboard.png"
-            alt="TraderM8 dashboard with charts, bias cards, and countdown"
-            placeholder="Homepage / Dashboard screenshot"
-            sub="Bias cards · Session levels · Liquidity heatmap · Position calculator"
-          />
-        </BrowserFrame>
-      </div>
+    <section className="relative z-10 px-5 sm:px-8 pt-12 sm:pt-16">
+      <ContainerScroll
+        titleComponent={
+          <>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] animate-pulse" />
+              Closed beta — first 100 unlock free-for-life
+            </div>
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.05]">
+              Trade with your{" "}
+              <span className="bg-gradient-to-br from-[#60a5fa] via-[#3b82f6] to-[#1d4ed8] bg-clip-text text-transparent">
+                M8
+              </span>
+              <br className="hidden sm:block" />
+              <span className="sm:inline"> beside you.</span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-[#94a3b8] leading-relaxed">
+              TraderM8 is the trading dashboard built for the way you actually
+              trade. Bias cards, session levels, liquidity heatmaps, a journal
+              that tells the truth, and a position calculator that pops out
+              next to your charts.
+            </p>
+            <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a
+                href="#waitlist"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold px-6 py-3 rounded-md shadow-lg shadow-[#3b82f6]/25 transition-all hover:shadow-[#3b82f6]/40"
+              >
+                Join the waitlist
+                <span aria-hidden>→</span>
+              </a>
+              <Link
+                href="/landing/features"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 text-white text-sm font-semibold px-6 py-3 rounded-md transition-colors"
+              >
+                See every feature in detail
+              </Link>
+            </div>
+            <p className="mt-4 text-[11px] text-[#475569]">
+              Free for life — first 100 traders only · No card required · Paid
+              plans after
+            </p>
+          </>
+        }
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/landing/dashboard.png"
+          alt="TraderM8 dashboard with charts, bias cards, and countdown"
+          className="w-full h-full object-cover object-left-top rounded-2xl"
+          draggable={false}
+        />
+      </ContainerScroll>
     </section>
   );
 }
