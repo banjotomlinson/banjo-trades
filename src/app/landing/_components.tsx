@@ -39,17 +39,14 @@ export function Nav() {
           <Logo />
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm text-[#94a3b8]">
-          <Link href="/landing/features" className="hover:text-white transition-colors">
-            Features
-          </Link>
           <Link href="/landing#reviews" className="hover:text-white transition-colors">
             Reviews
           </Link>
-          <Link href="/landing#about" className="hover:text-white transition-colors">
-            About
+          <Link href="/landing/features" className="hover:text-white transition-colors">
+            Features
           </Link>
           <Link href="/landing#faq" className="hover:text-white transition-colors">
-            FAQ
+            FAQs
           </Link>
         </div>
         <div className="flex items-center gap-2">
@@ -235,14 +232,14 @@ export function Footer() {
           <p className="mt-2 text-sm text-[#64748b]">Your mate of the market.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-x-10 gap-y-3 text-sm text-[#64748b]">
+          <Link href="/landing#reviews" className="hover:text-white transition-colors">
+            Reviews
+          </Link>
           <Link href="/landing/features" className="hover:text-white transition-colors">
             Features
           </Link>
-          <Link href="/landing#about" className="hover:text-white transition-colors">
-            About
-          </Link>
           <Link href="/landing#faq" className="hover:text-white transition-colors">
-            FAQ
+            FAQs
           </Link>
           <Link href="/landing#waitlist" className="hover:text-white transition-colors">
             Waitlist

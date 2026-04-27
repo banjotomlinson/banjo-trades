@@ -319,31 +319,16 @@ function FounderNote() {
   return (
     <section id="about" className="relative z-10 px-5 sm:px-8 py-24 border-t border-white/5">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,400px)_1fr] gap-10 lg:gap-16 items-center">
-        {/* Photo placeholder */}
+        {/* Founder photo */}
         <div className="relative">
-          <div className="aspect-[4/5] rounded-2xl border border-white/10 bg-gradient-to-br from-[#0f172a] via-[#0a0e17] to-[#05070d] overflow-hidden flex items-center justify-center">
-            <div
-              aria-hidden
-              className="absolute inset-0 opacity-50"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)",
-                backgroundSize: "20px 20px",
-              }}
+          <div className="aspect-[4/5] rounded-2xl border border-white/10 overflow-hidden bg-[#0a0e17]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/landing/IMG_1391.JPG"
+              alt="Banjo Tomlinson, founder of TraderM8"
+              className="w-full h-full object-cover"
+              loading="lazy"
             />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.08),transparent_60%)]" />
-            <div className="relative text-center px-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] uppercase tracking-wider font-bold text-[#3b82f6] mb-3">
-                <span aria-hidden>📷</span>
-                Photo placeholder
-              </div>
-              <div className="text-white text-base font-semibold">
-                Photo of Banjo
-              </div>
-              <div className="text-[10px] text-[#475569] mt-2">
-                drop banjo.jpg into public/landing/ to fill this in
-              </div>
-            </div>
           </div>
           {/* Subtle glow behind the frame */}
           <div

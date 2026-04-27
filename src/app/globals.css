@@ -32,3 +32,14 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Smooth scroll for in-page anchor links (e.g. nav -> #reviews / #faq).
+   scroll-padding-top accounts for the sticky 64px nav so anchors don't
+   land underneath the header. */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
