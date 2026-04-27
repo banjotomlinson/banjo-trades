@@ -406,6 +406,7 @@ function FounderNote() {
 
 // ── Waitlist form ─────────────────────────────────────────────────
 function Waitlist() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [primaryAsset, setPrimaryAsset] = useState("");
   const [experience, setExperience] = useState("");
@@ -423,10 +424,11 @@ function Waitlist() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name,
           email,
-          primary_asset: primaryAsset || null,
-          experience: experience || null,
-          pain_point: painPoint || null,
+          primary_asset: primaryAsset,
+          experience,
+          pain_point: painPoint,
           source: "landing",
         }),
       });
@@ -474,6 +476,20 @@ function Waitlist() {
           onSubmit={submit}
           className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-6 sm:p-8 space-y-5"
         >
+          <Field label="Name" required>
+            <input
+              type="text"
+              required
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="First and last name"
+              minLength={2}
+              maxLength={120}
+              className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
+            />
+          </Field>
+
           <Field label="Email" required>
             <input
               type="email"
@@ -487,13 +503,14 @@ function Waitlist() {
           </Field>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="What do you mainly trade?">
+            <Field label="What do you mainly trade?" required>
               <select
+                required
                 value={primaryAsset}
                 onChange={(e) => setPrimaryAsset(e.target.value)}
                 className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3b82f6] transition-colors"
               >
-                <option value="">— choose one —</option>
+                <option value="" disabled>— choose one —</option>
                 <option value="futures">Index futures (NQ, ES, etc.)</option>
                 <option value="forex">Forex</option>
                 <option value="crypto">Crypto</option>
@@ -503,13 +520,14 @@ function Waitlist() {
               </select>
             </Field>
 
-            <Field label="How long have you been trading?">
+            <Field label="How long have you been trading?" required>
               <select
+                required
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
                 className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3b82f6] transition-colors"
               >
-                <option value="">— choose one —</option>
+                <option value="" disabled>— choose one —</option>
                 <option value="<1y">Less than a year</option>
                 <option value="1-3y">1–3 years</option>
                 <option value="3-5y">3–5 years</option>
@@ -518,12 +536,14 @@ function Waitlist() {
             </Field>
           </div>
 
-          <Field label="What's your biggest pain point right now?" optional>
+          <Field label="What's your biggest pain point right now?" required>
             <textarea
+              required
               value={painPoint}
               onChange={(e) => setPainPoint(e.target.value)}
               rows={3}
               placeholder="e.g. juggling tabs, journaling consistency, missing news, sizing mistakes..."
+              minLength={3}
               maxLength={1000}
               className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] resize-y transition-colors"
             />
@@ -540,11 +560,6 @@ function Waitlist() {
           >
             {status === "submitting" ? "Submitting..." : "Reserve my spot"}
           </button>
-
-          <p className="text-[11px] text-[#475569] text-center">
-            We&apos;ll only email you when your invite is ready. No newsletter.
-            No spam. Unsubscribe with one click.
-          </p>
         </form>
       </div>
     </section>

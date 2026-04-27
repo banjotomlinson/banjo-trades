@@ -13,6 +13,7 @@ function admin() {
 }
 
 interface Payload {
+  name?: string;
   email?: string;
   primary_asset?: string;
   experience?: string;
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supa.from("waitlist_signups").insert({
     email,
+    name: body.name?.trim().slice(0, 200) || null,
     primary_asset: body.primary_asset?.slice(0, 80) || null,
     experience: body.experience?.slice(0, 80) || null,
     pain_point: body.pain_point?.slice(0, 1000) || null,
