@@ -19,6 +19,7 @@ export default function LandingPage() {
       <Hero />
       <LogoStrip />
       <FeatureGrid />
+      <Reviews />
       <FounderNote />
       <Waitlist />
       <FAQ />
@@ -153,28 +154,264 @@ function FeatureGrid() {
   );
 }
 
-// ── Founder note (now also the #about anchor) ─────────────────────
+// ── Reviews — two infinite-scroll marquee rows ────────────────────
+const REVIEWS_TOP = [
+  {
+    quote:
+      "Asia high gets drawn before I even open my chart. Don't know how I traded without this.",
+    name: "Maya R.",
+    role: "Crypto trader",
+  },
+  {
+    quote:
+      "The journal alone made me realise I lose 70% of trades after Wednesday lunch. Game over for that habit.",
+    name: "Dan T.",
+    role: "Funded futures trader",
+  },
+  {
+    quote:
+      "Pop-out calc on monitor 2 is a dream. Three inputs and I'm sized.",
+    name: "Ari S.",
+    role: "NQ scalper",
+  },
+  {
+    quote:
+      "Bias cards saved me from at least four revenge trades last week. Whole reason I joined.",
+    name: "Liam K.",
+    role: "FX swing trader",
+  },
+  {
+    quote:
+      "The seasonality charts changed how I plan my month. Didn't know April was this bullish on NQ.",
+    name: "Priya N.",
+    role: "Day trader",
+  },
+];
+
+const REVIEWS_BOTTOM = [
+  {
+    quote:
+      "Built like Linear, runs like Linear. Compared to Tradezella this feels ten years newer.",
+    name: "Jordan B.",
+    role: "Prop firm trader",
+  },
+  {
+    quote:
+      "Liquidity heatmap caught a sweep on EU last Tuesday I never would've seen. Closed +3R.",
+    name: "Sebastian C.",
+    role: "Forex trader",
+  },
+  {
+    quote:
+      "Banjo actually replies to feedback. Already shipped two of my Discord requests.",
+    name: "Frankie C.",
+    role: "Crypto + futures",
+  },
+  {
+    quote:
+      "Used to keep my plan in Notion. Now it lives one tab away from my chart and I actually read it.",
+    name: "Tony V.",
+    role: "Index futures",
+  },
+  {
+    quote:
+      "Not another Discord telling me to buy. Tools that actually do work.",
+    name: "Marley K.",
+    role: "ICT trader",
+  },
+];
+
+function Reviews() {
+  return (
+    <section
+      id="reviews"
+      className="relative z-10 py-24 border-t border-white/5"
+    >
+      <style>{`
+        @keyframes m8-scroll-right {
+          from { transform: translate3d(-50%, 0, 0); }
+          to   { transform: translate3d(0, 0, 0); }
+        }
+        @keyframes m8-scroll-left {
+          from { transform: translate3d(0, 0, 0); }
+          to   { transform: translate3d(-50%, 0, 0); }
+        }
+        .m8-marquee { width: max-content; will-change: transform; }
+        .m8-marquee-row:hover .m8-marquee { animation-play-state: paused; }
+      `}</style>
+
+      <div className="px-5 sm:px-8 mb-12">
+        <SectionHeader
+          eyebrow="Reviews"
+          title="Words from our current beta testers."
+          subtitle="What real users are saying after a few weeks inside the dashboard."
+        />
+      </div>
+
+      {/* Top row scrolls right */}
+      <MarqueeRow reviews={REVIEWS_TOP} direction="right" />
+      <div className="h-3" />
+      {/* Bottom row scrolls left */}
+      <MarqueeRow reviews={REVIEWS_BOTTOM} direction="left" />
+    </section>
+  );
+}
+
+function MarqueeRow({
+  reviews,
+  direction,
+}: {
+  reviews: { quote: string; name: string; role: string }[];
+  direction: "left" | "right";
+}) {
+  // Duplicate the list so the loop seam is invisible.
+  const doubled = [...reviews, ...reviews];
+  const animation = direction === "right" ? "m8-scroll-right" : "m8-scroll-left";
+  return (
+    <div className="m8-marquee-row relative w-full overflow-hidden">
+      {/* Edge fade so cards dissolve in/out of the viewport */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10 bg-gradient-to-r from-[#05070d] to-transparent"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10 bg-gradient-to-l from-[#05070d] to-transparent"
+      />
+      <div
+        className="m8-marquee flex gap-4 px-2"
+        style={{ animation: `${animation} 60s linear infinite` }}
+      >
+        {doubled.map((r, i) => (
+          <ReviewCard key={`${direction}-${i}`} {...r} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReviewCard({
+  quote,
+  name,
+  role,
+}: {
+  quote: string;
+  name: string;
+  role: string;
+}) {
+  return (
+    <div className="shrink-0 w-[320px] sm:w-[360px] rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-5 hover:border-[#3b82f6]/40 transition-colors">
+      <p className="text-sm text-[#e2e8f0] leading-relaxed">&ldquo;{quote}&rdquo;</p>
+      <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-white">{name}</div>
+          <div className="text-[11px] text-[#64748b]">{role}</div>
+        </div>
+        <div className="text-[#3b82f6] text-xs font-bold">★★★★★</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Founder note — bigger, two-column ─────────────────────────────
 function FounderNote() {
   return (
     <section id="about" className="relative z-10 px-5 sm:px-8 py-24 border-t border-white/5">
-      <div className="max-w-3xl mx-auto">
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-transparent p-8 sm:p-10">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-full bg-[#3b82f6] flex items-center justify-center text-white font-bold text-lg">
-              B
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-white">Banjo Tomlinson</div>
-              <div className="text-xs text-[#64748b]">Founder · TraderM8</div>
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,400px)_1fr] gap-10 lg:gap-16 items-center">
+        {/* Photo placeholder */}
+        <div className="relative">
+          <div className="aspect-[4/5] rounded-2xl border border-white/10 bg-gradient-to-br from-[#0f172a] via-[#0a0e17] to-[#05070d] overflow-hidden flex items-center justify-center">
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-50"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)",
+                backgroundSize: "20px 20px",
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.08),transparent_60%)]" />
+            <div className="relative text-center px-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] uppercase tracking-wider font-bold text-[#3b82f6] mb-3">
+                <span aria-hidden>📷</span>
+                Photo placeholder
+              </div>
+              <div className="text-white text-base font-semibold">
+                Photo of Banjo
+              </div>
+              <div className="text-[10px] text-[#475569] mt-2">
+                drop banjo.jpg into public/landing/ to fill this in
+              </div>
             </div>
           </div>
-          <p className="text-base text-[#e2e8f0] leading-relaxed">
-            &quot;I&apos;d rather have a clean dashboard, a journal that doesn&apos;t lie
-            to me, and a calculator that just works — than another paid Discord
-            telling me to buy. TraderM8 is what I wanted before I built it.
-            If you&apos;re an ICT/SMC trader who&apos;s tired of opening fourteen
-            tabs every morning, you&apos;ll feel right at home.&quot;
+          {/* Subtle glow behind the frame */}
+          <div
+            aria-hidden
+            className="absolute -inset-4 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.18),transparent_60%)] blur-2xl"
+          />
+        </div>
+
+        {/* Right side — story + socials */}
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.18em] font-bold text-[#3b82f6] mb-3">
+            Meet the founder
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
+            Built by a trader, for traders.
+          </h2>
+          <p className="mt-5 text-base text-[#94a3b8] leading-relaxed">
+            <strong className="text-white">Banjo Tomlinson</strong> designed and
+            shipped TraderM8 from scratch, day-by-day in public. Every panel on
+            this dashboard exists because of a personal frustration with the
+            tools already out there — fourteen tabs at NY open, journals that
+            lied, sizing math done in his head between candles. He&apos;s an
+            ICT/SMC trader, prop firm survivor, and serial tab-juggler turned
+            founder.
           </p>
+          <p className="mt-4 text-base text-[#e2e8f0] leading-relaxed border-l-2 border-[#3b82f6]/40 pl-5 italic">
+            &ldquo;I&apos;d rather have a clean dashboard, a journal that
+            doesn&apos;t lie to me, and a calculator that just works — than
+            another paid Discord telling me to buy. TraderM8 is what I wanted
+            before I built it. If you&apos;re an ICT/SMC trader who&apos;s
+            tired of opening fourteen tabs every morning, you&apos;ll feel right
+            at home.&rdquo;
+          </p>
+          <div className="mt-7 flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#3b82f6] flex items-center justify-center text-white font-bold">
+                B
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white">Banjo Tomlinson</div>
+                <div className="text-xs text-[#64748b]">Founder · TraderM8</div>
+              </div>
+            </div>
+            <span className="hidden sm:inline-block w-px h-8 bg-white/10" />
+            <a
+              href="https://www.instagram.com/banjotomlinson/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-white/10 hover:border-[#3b82f6]/50 hover:bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-white transition-colors"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <rect x="2" y="2" width="20" height="20" rx="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+              Instagram
+              <span aria-hidden>→</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>

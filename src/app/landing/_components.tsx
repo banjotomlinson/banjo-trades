@@ -42,6 +42,9 @@ export function Nav() {
           <Link href="/landing/features" className="hover:text-white transition-colors">
             Features
           </Link>
+          <Link href="/landing#reviews" className="hover:text-white transition-colors">
+            Reviews
+          </Link>
           <Link href="/landing#about" className="hover:text-white transition-colors">
             About
           </Link>
