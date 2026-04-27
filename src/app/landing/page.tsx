@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-clip">
       <BgEffects />
       <Nav />
       <Hero />
@@ -139,7 +139,7 @@ function BgEffects() {
 // ── Top nav ───────────────────────────────────────────────────────
 function Nav() {
   return (
-    <nav className="relative z-50 sticky top-0 backdrop-blur-md bg-[#05070d]/70 border-b border-white/5">
+    <nav className="sticky top-0 z-50 backdrop-blur-md bg-[#05070d]/70 border-b border-white/5">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
         <Link href="/landing" className="flex items-center gap-2">
           <Logo />
@@ -152,17 +152,11 @@ function Nav() {
         <div className="flex items-center gap-2">
           <a
             href="#waitlist"
-            className="hidden sm:inline-flex text-xs font-semibold text-[#94a3b8] hover:text-white px-3 py-2 transition-colors"
+            className="inline-flex items-center gap-1.5 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-xs font-semibold px-4 py-2 rounded-md transition-colors"
           >
             Get early access
-          </a>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white text-xs font-semibold px-4 py-2 rounded-md transition-colors"
-          >
-            Login
             <span aria-hidden>→</span>
-          </Link>
+          </a>
         </div>
       </div>
     </nav>
@@ -714,9 +708,6 @@ function Footer() {
           <a href="#waitlist" className="hover:text-white transition-colors">
             Waitlist
           </a>
-          <Link href="/login" className="hover:text-white transition-colors">
-            Login
-          </Link>
         </div>
       </div>
       <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-white/5 text-[11px] text-[#475569] flex flex-col sm:flex-row gap-2 justify-between">
