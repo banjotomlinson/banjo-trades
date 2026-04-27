@@ -2,6 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  BgEffects,
+  BrowserFrame,
+  Footer,
+  Nav,
+  Screenshot,
+  SectionHeader,
+} from "./_components";
 
 export default function LandingPage() {
   return (
@@ -11,165 +19,11 @@ export default function LandingPage() {
       <Hero />
       <LogoStrip />
       <FeatureGrid />
-      <Spotlight
-        eyebrow="Bias & Session Levels"
-        title="Know which way the market's drawing — before you click buy."
-        body="ICT/SMC bias cards refresh on every candle close across NQ, ES, Gold, BTC and EUR/USD. Session H/L for Asia, London and New York lift onto the dashboard with pivot points calculated, so you stop drawing rectangles by hand at 3am."
-        bullets={[
-          "Mode-aware: flip to Crypto and the whole dashboard re-skins.",
-          "Pivots, ranges, and live/closed status per session.",
-          "Header tells you exactly which session is open, in your time zone.",
-        ]}
-        image="/landing/sessions.png"
-        placeholder="Asia / London / New York session cards + position calculator"
-        flip={false}
-      />
-      <Spotlight
-        eyebrow="Liquidity Heatmap"
-        title="See where price is being drawn, not just where it is."
-        body="A live map of buy-side and sell-side liquidity pools tagged by source — PDH, PWL, equal highs, Asia high — sorted by distance and scored by likelihood of being the next sweep."
-        bullets={[
-          "Heat colour-coded: red high-prob sweeps stand out instantly.",
-          "Filters out tapped levels so the list stays current.",
-          "Per-instrument: NAS100, ES, Gold, Oil, BTC, EUR/USD and more.",
-        ]}
-        image="/landing/liquidity.png"
-        placeholder="NAS100 buy-side / sell-side liquidity pools"
-        flip
-      />
-      <Spotlight
-        eyebrow="Economic Calendar"
-        title="Filter the noise. Trade the events that actually move."
-        body="Multi-currency macro calendar with daily, weekly and monthly grids. Each event tagged HIGH / MED / LOW impact and Bullish / Bearish / Mixed bias. Side-panel Breaking News is relevance-scored — Reuters/Bloomberg up, listicle farms out."
-        bullets={[
-          "10 most-traded currencies pinned to the filter row.",
-          "Click a day → see every event with bias and forecast.",
-          "Currency selection syncs to the home Next-Event countdown.",
-        ]}
-        image="/landing/calendar.png"
-        placeholder="Monthly calendar grid with Breaking News sidebar"
-        flip={false}
-      />
-      <Spotlight
-        eyebrow="Market Movers"
-        title="Spot the unusual stuff fast — across every asset class."
-        body="Today's biggest movers across futures, commodities, crypto and forex in one ranked list. The top mover gets a hero card; the rest fall in by absolute % move. Scrub the date back through the year to study previous big days."
-        bullets={[
-          "All / Futures / Commodities / Crypto / Forex tabs.",
-          "1-year date scrubber — instant lookup, no extra fetch.",
-          "Cached at the edge so 1k users hit upstream as 1.",
-        ]}
-        image="/landing/movers.png"
-        placeholder="Top mover hero card + ranked list"
-        flip
-      />
-      <Spotlight
-        eyebrow="Seasonality"
-        title="The edge nobody on FinTwit talks about."
-        body="Average price path through any month for any instrument, layered 15-year, 10-year, 5-year and year-to-date. Hover the chart to read each line's exact percentage at any day. Stats card shows avg return, win rate, best/worst year."
-        bullets={[
-          "30+ instruments — futures, commodities, FX, crypto.",
-          "Min/max envelope band shows the historical extremes.",
-          "Backtest your gut feel before you put real money on it.",
-        ]}
-        image="/landing/seasonality.png"
-        placeholder="NQ April seasonality chart"
-        flip={false}
-      />
-      <Spotlight
-        eyebrow="Position Calculator"
-        title="Pop it onto your second monitor. Never miss size again."
-        body="Three inputs — contract, risk amount, stop in points — out comes the size, the dollar risk, and a clean R:R derivation. One-click pop-out lives in its own draggable window beside your charts."
-        bullets={[
-          "Single grouped dropdown for every contract you trade.",
-          "Mode-aware: only shows the contracts for your active asset class.",
-          "Pop-out window survives chart navigation and reloads.",
-        ]}
-        image="/landing/sessions.png"
-        placeholder="Position calculator + session levels"
-        flip
-      />
-      <Spotlight
-        eyebrow="Journal & Analytics"
-        title="A journal that tells the truth, not the story you wanted."
-        body="Tap a day to log a trade. Watch the calendar fill in green and red. Weekly totals on the Saturday cell. Flip to yearly view for a 12-month grid. Scroll down for the equity curve, win rate, profit factor, max drawdown, day-of-week breakdown, streaks."
-        bullets={[
-          "Monthly + Yearly P/L views with calendar tile colouring.",
-          "Per-week summary on every Saturday cell.",
-          "Stats update live as you log — no spreadsheet glue.",
-        ]}
-        image="/landing/journal.png"
-        placeholder="Monthly P&L calendar with green/red cells"
-        flip={false}
-      />
-      <Spotlight
-        eyebrow="Trade Planner"
-        title="Your daily playbook on the same screen as your dashboard."
-        body="Two columns per plan — Trade Plan on the left, Risk Management on the right. Type the rules you actually follow, read them every morning, edit when something changes. No checkboxes pretending it's a to-do list."
-        bullets={[
-          "Numbered text rows, multi-line, auto-expanding.",
-          "Per-plan title, multiple plans, sorted by most recent edit.",
-          "Synced to your account across every device you sign in on.",
-        ]}
-        image="/landing/planner.png"
-        placeholder="planner with trade plan + risk management columns"
-        flip
-      />
-      <Coverage />
       <FounderNote />
       <Waitlist />
       <FAQ />
       <Footer />
     </main>
-  );
-}
-
-// ── Background gradient blobs ─────────────────────────────────────
-function BgEffects() {
-  return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
-      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1100px] h-[1100px] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.18),transparent_60%)]" />
-      <div className="absolute top-[60vh] -right-40 w-[700px] h-[700px] bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.10),transparent_60%)]" />
-      <div className="absolute top-[120vh] -left-40 w-[700px] h-[700px] bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.08),transparent_60%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,transparent,#05070d_70%)]" />
-    </div>
-  );
-}
-
-// ── Top nav ───────────────────────────────────────────────────────
-function Nav() {
-  return (
-    <nav className="sticky top-0 z-50 backdrop-blur-md bg-[#05070d]/70 border-b border-white/5">
-      <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
-        <Link href="/landing" className="flex items-center gap-2">
-          <Logo />
-        </Link>
-        <div className="hidden md:flex items-center gap-8 text-sm text-[#94a3b8]">
-          <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#about" className="hover:text-white transition-colors">About</a>
-          <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-        </div>
-        <div className="flex items-center gap-2">
-          <a
-            href="#waitlist"
-            className="inline-flex items-center gap-1.5 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-xs font-semibold px-4 py-2 rounded-md transition-colors"
-          >
-            Get early access
-            <span aria-hidden>→</span>
-          </a>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-function Logo({ size = "default" }: { size?: "default" | "lg" }) {
-  const c =
-    size === "lg" ? "text-3xl tracking-tight" : "text-base tracking-tight";
-  return (
-    <span className={`font-bold text-white ${c}`}>
-      Trader<span className="text-[#3b82f6]">M8</span>
-    </span>
   );
 }
 
@@ -183,7 +37,10 @@ function Hero() {
           Closed beta — first 100 unlock free-for-life
         </div>
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.05]">
-          Trade with <span className="bg-gradient-to-br from-[#60a5fa] via-[#3b82f6] to-[#1d4ed8] bg-clip-text text-transparent">your mate</span>
+          Trade with your{" "}
+          <span className="bg-gradient-to-br from-[#60a5fa] via-[#3b82f6] to-[#1d4ed8] bg-clip-text text-transparent">
+            M8
+          </span>
           <br className="hidden sm:block" />
           <span className="sm:inline"> beside you.</span>
         </h1>
@@ -200,12 +57,12 @@ function Hero() {
             Join the waitlist
             <span aria-hidden>→</span>
           </a>
-          <a
-            href="#features"
+          <Link
+            href="/landing/features"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 text-white text-sm font-semibold px-6 py-3 rounded-md transition-colors"
           >
-            See what's inside
-          </a>
+            See every feature in detail
+          </Link>
         </div>
         <p className="mt-4 text-[11px] text-[#475569]">
           Free for life — first 100 traders only · No card required · Paid plans after
@@ -227,7 +84,7 @@ function Hero() {
   );
 }
 
-// ── Trust strip / asset class coverage ────────────────────────────
+// ── Asset class strip ─────────────────────────────────────────────
 function LogoStrip() {
   return (
     <section className="relative z-10 px-5 sm:px-8 py-12 border-y border-white/5 bg-white/[0.015]">
@@ -237,10 +94,7 @@ function LogoStrip() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-[#64748b]">
           {["Index Futures", "Forex", "Crypto", "Commodities", "Indices"].map((c) => (
-            <span
-              key={c}
-              className="text-sm font-semibold tracking-wide"
-            >
+            <span key={c} className="text-sm font-semibold tracking-wide">
               {c}
             </span>
           ))}
@@ -250,54 +104,18 @@ function LogoStrip() {
   );
 }
 
-// ── 6-card feature grid ───────────────────────────────────────────
+// ── 9-card overview grid + link to features page ─────────────────
 function FeatureGrid() {
   const features = [
-    {
-      icon: "▲",
-      title: "ICT/SMC Bias Cards",
-      body: "Daily and 1H confluence scoring on five flagship instruments. Updates on every candle close.",
-    },
-    {
-      icon: "⚡",
-      title: "Session Levels",
-      body: "Asia / London / New York highs and lows lifted automatically — no more drawing rectangles by hand.",
-    },
-    {
-      icon: "💧",
-      title: "Liquidity Heatmap",
-      body: "Untapped buy-side and sell-side pools tagged, scored, and sorted by distance from current price.",
-    },
-    {
-      icon: "🧮",
-      title: "Position Calculator",
-      body: "Three inputs in, exact size and risk out. Pop it into a draggable window beside your charts.",
-    },
-    {
-      icon: "📓",
-      title: "P&L Journal",
-      body: "Tap a day, log a trade, watch the calendar fill in green and red. Yearly view rolls up the full 12 months.",
-    },
-    {
-      icon: "🗒️",
-      title: "Trade Planner",
-      body: "Daily playbook with Trade Plan + Risk Management side by side. Synced across every device you sign in on.",
-    },
-    {
-      icon: "📅",
-      title: "Economic Calendar",
-      body: "Currency-filtered macro events plus a relevance-scored Breaking News feed. Less noise, more signal.",
-    },
-    {
-      icon: "📈",
-      title: "Market Movers",
-      body: "Date-scrubbable % movers across futures, crypto, forex, commodities. Find the unusual stuff fast.",
-    },
-    {
-      icon: "🍂",
-      title: "Seasonality",
-      body: "15y / 10y / 5y / YTD overlays for any month and any instrument. Hover for the exact daily average.",
-    },
+    { icon: "▲", title: "ICT/SMC Bias Cards", body: "Daily and 1H confluence scoring on five flagship instruments. Updates on every candle close." },
+    { icon: "⚡", title: "Session Levels", body: "Asia / London / New York highs and lows lifted automatically — no more drawing rectangles by hand." },
+    { icon: "💧", title: "Liquidity Heatmap", body: "Untapped buy-side and sell-side pools tagged, scored, and sorted by distance from current price." },
+    { icon: "🧮", title: "Position Calculator", body: "Three inputs in, exact size and risk out. Pop it into a draggable window beside your charts." },
+    { icon: "📓", title: "P&L Journal", body: "Tap a day, log a trade, watch the calendar fill in green and red. Yearly view rolls up the full 12 months." },
+    { icon: "🗒️", title: "Trade Planner", body: "Daily playbook with Trade Plan + Risk Management side by side. Synced across every device you sign in on." },
+    { icon: "📅", title: "Economic Calendar", body: "Currency-filtered macro events plus a relevance-scored Breaking News feed. Less noise, more signal." },
+    { icon: "📈", title: "Market Movers", body: "Date-scrubbable % movers across futures, crypto, forex, commodities. Find the unusual stuff fast." },
+    { icon: "🍂", title: "Seasonality", body: "15y / 10y / 5y / YTD overlays for any month and any instrument. Hover for the exact daily average." },
   ];
   return (
     <section id="features" className="relative z-10 px-5 sm:px-8 py-24">
@@ -321,116 +139,24 @@ function FeatureGrid() {
             </div>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-function SectionHeader({
-  eyebrow,
-  title,
-  subtitle,
-}: {
-  eyebrow: string;
-  title: string;
-  subtitle?: string;
-}) {
-  return (
-    <div className="text-center max-w-2xl mx-auto">
-      <div className="text-[11px] uppercase tracking-[0.18em] font-bold text-[#3b82f6] mb-3">
-        {eyebrow}
-      </div>
-      <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-        {title}
-      </h2>
-      {subtitle && (
-        <p className="mt-4 text-base text-[#94a3b8] leading-relaxed">{subtitle}</p>
-      )}
-    </div>
-  );
-}
-
-// ── Spotlight: alternating screenshot + copy rows ────────────────
-function Spotlight({
-  eyebrow,
-  title,
-  body,
-  bullets,
-  image,
-  placeholder,
-  flip,
-}: {
-  eyebrow: string;
-  title: string;
-  body: string;
-  bullets: string[];
-  image?: string;
-  placeholder: string;
-  flip: boolean;
-}) {
-  return (
-    <section className="relative z-10 px-5 sm:px-8 py-20 sm:py-24">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-        <div className={flip ? "lg:order-2" : ""}>
-          <div className="text-[11px] uppercase tracking-[0.18em] font-bold text-[#3b82f6] mb-3">
-            {eyebrow}
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
-            {title}
-          </h2>
-          <p className="mt-4 text-base text-[#94a3b8] leading-relaxed">{body}</p>
-          <ul className="mt-6 space-y-2.5">
-            {bullets.map((b) => (
-              <li key={b} className="flex items-start gap-2.5 text-sm text-[#e2e8f0]">
-                <span className="mt-[5px] inline-block w-1.5 h-1.5 rounded-full bg-[#3b82f6] shrink-0" />
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className={flip ? "lg:order-1" : ""}>
-          <BrowserFrame label={eyebrow.toLowerCase().replace(/\s+/g, "-")}>
-            <Screenshot src={image} alt={`${title} screenshot`} placeholder={placeholder} />
-          </BrowserFrame>
+        <div className="mt-12 text-center">
+          <Link
+            href="/landing/features"
+            className="inline-flex items-center gap-2 border border-white/10 hover:border-[#3b82f6]/50 hover:bg-white/[0.03] text-white text-sm font-semibold px-6 py-3 rounded-md transition-all"
+          >
+            See every feature in detail
+            <span aria-hidden>→</span>
+          </Link>
         </div>
       </div>
     </section>
   );
 }
 
-// ── Coverage / what's covered today ───────────────────────────────
-function Coverage() {
-  return (
-    <section id="about" className="relative z-10 px-5 sm:px-8 py-24 border-t border-white/5">
-      <div className="max-w-6xl mx-auto">
-        <SectionHeader
-          eyebrow="Why it exists"
-          title="The dashboard the founder wished existed."
-          subtitle="Built day-by-day in public by a working trader. Every panel comes from a real frustration with what's already out there."
-        />
-        <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card title="Made for retail" body="Not a fund tool dumbed down. Designed from day one for traders sizing $50k prop accounts and personal money." />
-          <Card title="Fast over fancy" body="Sub-30s edge cache, shared Supabase data layer — same load whether one user is on it or one thousand." />
-          <Card title="First 100 free for life" body="Get in before the door closes and you keep every feature, free, forever. Everyone after lands on a fair paid plan." />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Card({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6">
-      <h3 className="text-base font-semibold text-white mb-2">{title}</h3>
-      <p className="text-sm text-[#94a3b8] leading-relaxed">{body}</p>
-    </div>
-  );
-}
-
-// ── Founder note ──────────────────────────────────────────────────
+// ── Founder note (now also the #about anchor) ─────────────────────
 function FounderNote() {
   return (
-    <section className="relative z-10 px-5 sm:px-8 py-24">
+    <section id="about" className="relative z-10 px-5 sm:px-8 py-24 border-t border-white/5">
       <div className="max-w-3xl mx-auto">
         <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-transparent p-8 sm:p-10">
           <div className="flex items-center gap-3 mb-5">
@@ -443,11 +169,11 @@ function FounderNote() {
             </div>
           </div>
           <p className="text-base text-[#e2e8f0] leading-relaxed">
-            "I&apos;d rather have a clean dashboard, a journal that doesn&apos;t lie
+            &quot;I&apos;d rather have a clean dashboard, a journal that doesn&apos;t lie
             to me, and a calculator that just works — than another paid Discord
             telling me to buy. TraderM8 is what I wanted before I built it.
             If you&apos;re an ICT/SMC trader who&apos;s tired of opening fourteen
-            tabs every morning, you&apos;ll feel right at home."
+            tabs every morning, you&apos;ll feel right at home.&quot;
           </p>
         </div>
       </div>
@@ -619,12 +345,8 @@ function Field({
         <span className="text-[11px] uppercase tracking-wider font-bold text-[#94a3b8]">
           {label}
         </span>
-        {optional && (
-          <span className="text-[10px] text-[#475569]">optional</span>
-        )}
-        {required && (
-          <span className="text-[10px] text-[#3b82f6]">required</span>
-        )}
+        {optional && <span className="text-[10px] text-[#475569]">optional</span>}
+        {required && <span className="text-[10px] text-[#3b82f6]">required</span>}
       </div>
       {children}
     </label>
@@ -643,16 +365,12 @@ function FAQ() {
       a: "Yes — for the first 100 traders to grab a waitlist spot. They get every feature, free, locked in for life, no card required. After that we shift to paid plans to keep the lights on. The 100 freebies don't move with the price changes — once you're in, you're in. Move fast.",
     },
     {
-      q: "Which brokers does it integrate with?",
-      a: "TraderM8 is currently a journaling + analysis layer that sits beside your charting platform (TradingView, Tradovate, etc). Auto-imports from broker statements are coming next quarter.",
-    },
-    {
       q: "Will my trade data stay private?",
       a: "Your journal and plans live on your own row in our database with row-level security. Only you can read them. Admins can see your email and feedback submissions, nothing else.",
     },
     {
       q: "Can I use it on mobile?",
-      a: "It's responsive — runs on phones and tablets — but the experience is built for a desktop next to your charts. A native mobile companion is on the roadmap.",
+      a: "It's responsive — runs on phones and tablets — but the experience is built for a desktop next to your charts.",
     },
     {
       q: "Why the name?",
@@ -683,131 +401,5 @@ function FAQ() {
         </div>
       </div>
     </section>
-  );
-}
-
-// ── Footer ────────────────────────────────────────────────────────
-function Footer() {
-  return (
-    <footer className="relative z-10 px-5 sm:px-8 pt-16 pb-10 border-t border-white/5">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start justify-between gap-6">
-        <div>
-          <Logo size="lg" />
-          <p className="mt-2 text-sm text-[#64748b]">Your mate of the market.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-x-10 gap-y-3 text-sm text-[#64748b]">
-          <a href="#features" className="hover:text-white transition-colors">
-            Features
-          </a>
-          <a href="#about" className="hover:text-white transition-colors">
-            About
-          </a>
-          <a href="#faq" className="hover:text-white transition-colors">
-            FAQ
-          </a>
-          <a href="#waitlist" className="hover:text-white transition-colors">
-            Waitlist
-          </a>
-        </div>
-      </div>
-      <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-white/5 text-[11px] text-[#475569] flex flex-col sm:flex-row gap-2 justify-between">
-        <span>© {new Date().getFullYear()} TraderM8. All rights reserved.</span>
-        <span>Trading involves risk. Nothing on this site is financial advice.</span>
-      </div>
-    </footer>
-  );
-}
-
-// ── Browser-frame wrapper for screenshots ─────────────────────────
-function BrowserFrame({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50 bg-[#0a0e17]">
-      <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#0f172a] border-b border-white/5">
-        <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]/70" />
-        <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]/70" />
-        <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e]/70" />
-        <span className="ml-3 text-[11px] text-[#475569] font-mono truncate">
-          traderm8.com / {label}
-        </span>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// ── Screenshot: real image when src is provided, otherwise placeholder ─
-function Screenshot({
-  src,
-  alt,
-  placeholder,
-  sub,
-}: {
-  src?: string;
-  alt?: string;
-  placeholder: string;
-  sub?: string;
-}) {
-  if (src) {
-    // Display the screenshot at its natural aspect ratio so the focal
-    // panel is never cropped. The browser frame sits flush around it.
-    return (
-      <div className="relative w-full bg-[#0a0e17]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt={alt ?? placeholder}
-          className="block w-full h-auto"
-          loading="lazy"
-        />
-      </div>
-    );
-  }
-  return <ScreenshotPlaceholder label={placeholder} sub={sub} />;
-}
-
-// ── Screenshot placeholder (fallback) ─────────────────────────────
-function ScreenshotPlaceholder({
-  label,
-  sub,
-}: {
-  label: string;
-  sub?: string;
-}) {
-  return (
-    <div className="relative aspect-[16/10] w-full bg-[#0a0e17] flex items-center justify-center overflow-hidden">
-      {/* Dot grid */}
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-50"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)",
-          backgroundSize: "20px 20px",
-        }}
-      />
-      {/* Glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.08),transparent_60%)]" />
-      <div className="relative text-center px-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] uppercase tracking-wider font-bold text-[#3b82f6] mb-3">
-          <span aria-hidden>🖼️</span>
-          Image placeholder
-        </div>
-        <div className="text-white text-sm sm:text-base font-semibold">
-          {label}
-        </div>
-        {sub && (
-          <div className="text-[#64748b] text-xs sm:text-sm mt-1">{sub}</div>
-        )}
-        <div className="text-[10px] text-[#475569] mt-3">
-          drop a screenshot at this slot
-        </div>
-      </div>
-    </div>
   );
 }
