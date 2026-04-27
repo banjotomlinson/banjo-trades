@@ -14,13 +14,14 @@ export default function LandingPage() {
       <Spotlight
         eyebrow="Bias & Session Levels"
         title="Know which way the market's drawing — before you click buy."
-        body="ICT/SMC bias cards refresh on every candle close across NQ, ES, Gold, BTC and EUR/USD. Session levels lift Asia, London and New York high/lows straight onto the dashboard so you stop drawing them by hand at 3am."
+        body="ICT/SMC bias cards refresh on every candle close across NQ, ES, Gold, BTC and EUR/USD. Session H/L for Asia, London and New York lift onto the dashboard with pivot points calculated, so you stop drawing rectangles by hand at 3am."
         bullets={[
           "Mode-aware: flip to Crypto and the whole dashboard re-skins.",
-          "Pivot points and range stats per session, auto-calculated.",
-          "Header tells you exactly which session is live, in your time zone.",
+          "Pivots, ranges, and live/closed status per session.",
+          "Header tells you exactly which session is open, in your time zone.",
         ]}
-        placeholder="screenshot — bias cards + session levels"
+        image="/landing/sessions.png"
+        placeholder="Asia / London / New York session cards + position calculator"
         flip={false}
       />
       <Spotlight
@@ -28,36 +29,78 @@ export default function LandingPage() {
         title="See where price is being drawn, not just where it is."
         body="A live map of buy-side and sell-side liquidity pools tagged by source — PDH, PWL, equal highs, Asia high — sorted by distance and scored by likelihood of being the next sweep."
         bullets={[
-          "Filters out tapped levels automatically.",
-          "Bias-aware heat scoring: aligned pools stand out.",
-          "Per-instrument: Futures, Crypto, Forex, Commodities.",
+          "Heat colour-coded: red high-prob sweeps stand out instantly.",
+          "Filters out tapped levels so the list stays current.",
+          "Per-instrument: NAS100, ES, Gold, Oil, BTC, EUR/USD and more.",
         ]}
-        placeholder="screenshot — liquidity heatmap"
+        image="/landing/liquidity.png"
+        placeholder="NAS100 buy-side / sell-side liquidity pools"
         flip
+      />
+      <Spotlight
+        eyebrow="Economic Calendar"
+        title="Filter the noise. Trade the events that actually move."
+        body="Multi-currency macro calendar with daily, weekly and monthly grids. Each event tagged HIGH / MED / LOW impact and Bullish / Bearish / Mixed bias. Side-panel Breaking News is relevance-scored — Reuters/Bloomberg up, listicle farms out."
+        bullets={[
+          "10 most-traded currencies pinned to the filter row.",
+          "Click a day → see every event with bias and forecast.",
+          "Currency selection syncs to the home Next-Event countdown.",
+        ]}
+        image="/landing/calendar.png"
+        placeholder="Monthly calendar grid with Breaking News sidebar"
+        flip={false}
+      />
+      <Spotlight
+        eyebrow="Market Movers"
+        title="Spot the unusual stuff fast — across every asset class."
+        body="Today's biggest movers across futures, commodities, crypto and forex in one ranked list. The top mover gets a hero card; the rest fall in by absolute % move. Scrub the date back through the year to study previous big days."
+        bullets={[
+          "All / Futures / Commodities / Crypto / Forex tabs.",
+          "1-year date scrubber — instant lookup, no extra fetch.",
+          "Cached at the edge so 1k users hit upstream as 1.",
+        ]}
+        image="/landing/movers.png"
+        placeholder="Top mover hero card + ranked list"
+        flip
+      />
+      <Spotlight
+        eyebrow="Seasonality"
+        title="The edge nobody on FinTwit talks about."
+        body="Average price path through any month for any instrument, layered 15-year, 10-year, 5-year and year-to-date. Hover the chart to read each line's exact percentage at any day. Stats card shows avg return, win rate, best/worst year."
+        bullets={[
+          "30+ instruments — futures, commodities, FX, crypto.",
+          "Min/max envelope band shows the historical extremes.",
+          "Backtest your gut feel before you put real money on it.",
+        ]}
+        image="/landing/seasonality.png"
+        placeholder="NQ April seasonality chart"
+        flip={false}
       />
       <Spotlight
         eyebrow="Position Calculator"
         title="Pop it onto your second monitor. Never miss size again."
-        body="Three inputs — contract, risk amount, stop in points — out comes the size, the dollar risk, and a clean R:R derivation. Click pop-out and it lives in its own draggable window beside your charts."
+        body="Three inputs — contract, risk amount, stop in points — out comes the size, the dollar risk, and a clean R:R derivation. One-click pop-out lives in its own draggable window beside your charts."
         bullets={[
           "Single grouped dropdown for every contract you trade.",
-          "Risk:Reward auto-fills take profit when blank.",
-          "One-click pop-out window survives chart navigation.",
+          "Mode-aware: only shows the contracts for your active asset class.",
+          "Pop-out window survives chart navigation and reloads.",
         ]}
-        placeholder="screenshot — position calculator pop-out"
-        flip={false}
+        image="/landing/sessions.png"
+        placeholder="Position calculator + session levels"
+        flip
       />
       <Spotlight
         eyebrow="Journal & Analytics"
         title="A journal that tells the truth, not the story you wanted."
-        body="Tap a day to log a trade. Watch the calendar fill in green and red. Flip to yearly view to see the whole 12-month grid. Then scroll down for the analytics: equity curve, win rate, profit factor, max drawdown, day-of-week breakdown, streaks."
+        body="Tap a day to log a trade. Watch the calendar fill in green and red. Weekly totals on the Saturday cell. Flip to yearly view for a 12-month grid. Scroll down for the equity curve, win rate, profit factor, max drawdown, day-of-week breakdown, streaks."
         bullets={[
           "Monthly + Yearly P/L views with calendar tile colouring.",
-          "Equity curve with drawdown overlay and recency markers.",
-          "Stats update live as you log trades — no spreadsheets.",
+          "Per-week summary on every Saturday cell.",
+          "Stats update live as you log — no spreadsheet glue.",
         ]}
-        placeholder="screenshot — journal P&L calendar + analytics"
-        flip
+        image="/landing/journal.png"
+        placeholder="Monthly P&L calendar with green/red cells"
+        flip={false}
       />
       <Spotlight
         eyebrow="Trade Planner"
@@ -66,10 +109,10 @@ export default function LandingPage() {
         bullets={[
           "Numbered text rows, multi-line, auto-expanding.",
           "Per-plan title, multiple plans, sorted by most recent edit.",
-          "Synced to your account across devices.",
+          "Synced to your account across every device you sign in on.",
         ]}
-        placeholder="screenshot — planner with trade plan + risk mgmt"
-        flip={false}
+        placeholder="planner with trade plan + risk management columns"
+        flip
       />
       <Coverage />
       <FounderNote />
@@ -177,8 +220,10 @@ function Hero() {
       {/* Hero screenshot */}
       <div className="max-w-6xl mx-auto mt-16">
         <BrowserFrame label="dashboard">
-          <ScreenshotPlaceholder
-            label="Homepage / Dashboard screenshot"
+          <Screenshot
+            src="/landing/dashboard.png"
+            alt="TraderM8 dashboard with charts, bias cards, and countdown"
+            placeholder="Homepage / Dashboard screenshot"
             sub="Bias cards · Session levels · Liquidity heatmap · Position calculator"
           />
         </BrowserFrame>
@@ -316,6 +361,7 @@ function Spotlight({
   title,
   body,
   bullets,
+  image,
   placeholder,
   flip,
 }: {
@@ -323,16 +369,13 @@ function Spotlight({
   title: string;
   body: string;
   bullets: string[];
+  image?: string;
   placeholder: string;
   flip: boolean;
 }) {
   return (
     <section className="relative z-10 px-5 sm:px-8 py-20 sm:py-24">
-      <div
-        className={`max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center ${
-          flip ? "" : ""
-        }`}
-      >
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
         <div className={flip ? "lg:order-2" : ""}>
           <div className="text-[11px] uppercase tracking-[0.18em] font-bold text-[#3b82f6] mb-3">
             {eyebrow}
@@ -351,8 +394,8 @@ function Spotlight({
           </ul>
         </div>
         <div className={flip ? "lg:order-1" : ""}>
-          <BrowserFrame label={eyebrow.toLowerCase()}>
-            <ScreenshotPlaceholder label={placeholder} />
+          <BrowserFrame label={eyebrow.toLowerCase().replace(/\s+/g, "-")}>
+            <Screenshot src={image} alt={`${title} screenshot`} placeholder={placeholder} />
           </BrowserFrame>
         </div>
       </div>
@@ -706,7 +749,35 @@ function BrowserFrame({
   );
 }
 
-// ── Screenshot placeholder (you'll drop real images in here later) ─
+// ── Screenshot: real image when src is provided, otherwise placeholder ─
+function Screenshot({
+  src,
+  alt,
+  placeholder,
+  sub,
+}: {
+  src?: string;
+  alt?: string;
+  placeholder: string;
+  sub?: string;
+}) {
+  if (src) {
+    return (
+      <div className="relative aspect-[16/10] w-full bg-[#0a0e17] overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt ?? placeholder}
+          className="w-full h-full object-cover object-top block"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+  return <ScreenshotPlaceholder label={placeholder} sub={sub} />;
+}
+
+// ── Screenshot placeholder (fallback) ─────────────────────────────
 function ScreenshotPlaceholder({
   label,
   sub,
