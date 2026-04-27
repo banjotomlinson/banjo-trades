@@ -116,28 +116,41 @@ export default function EconomicCalendar({
   // month navigation is idempotent and cheap.
   const loadedRanges = useRef<Set<string>>(new Set());
 
-  const fetchRange = useCallback(async (from: string, to: string) => {
-    const key = `${from}_${to}`;
-    if (loadedRanges.current.has(key)) return;
-    loadedRanges.current.add(key);
-    try {
-      const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const incoming: CalendarEvent[] = data.events || [];
-      // Merge into current events, deduped by (date|country|impact|title).
-      setEvents((prev) => {
-        const seen = new Map<string, CalendarEvent>();
-        for (const e of prev) seen.set(eventKey(e), e);
-        for (const e of incoming) seen.set(eventKey(e), e);
-        return Array.from(seen.values());
-      });
-    } catch {
-      loadedRanges.current.delete(key); // allow retry on transient failure
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Tracks which view-window we're currently waiting on so we can show a
+  // single loading state for the whole grid instead of letting partial
+  // events pop in mid-fetch.
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+
+  const fetchRange = useCallback(
+    async (from: string, to: string, forKey?: string) => {
+      const cacheKey = `${from}_${to}`;
+      if (loadedRanges.current.has(cacheKey)) {
+        if (forKey) setPendingKey((p) => (p === forKey ? null : p));
+        return;
+      }
+      loadedRanges.current.add(cacheKey);
+      if (forKey) setPendingKey(forKey);
+      try {
+        const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const incoming: CalendarEvent[] = data.events || [];
+        // Merge into current events, deduped by (date|country|impact|title).
+        setEvents((prev) => {
+          const seen = new Map<string, CalendarEvent>();
+          for (const e of prev) seen.set(eventKey(e), e);
+          for (const e of incoming) seen.set(eventKey(e), e);
+          return Array.from(seen.values());
+        });
+      } catch {
+        loadedRanges.current.delete(cacheKey); // allow retry on transient failure
+      } finally {
+        setLoading(false);
+        if (forKey) setPendingKey((p) => (p === forKey ? null : p));
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     // Only fetch default window on mount if we had no initial data
@@ -202,7 +215,7 @@ export default function EconomicCalendar({
       to = new Date(rangeEnd);
       to.setDate(to.getDate() + 14);
     }
-    fetchRange(ymd(from), ymd(to));
+    fetchRange(ymd(from), ymd(to), fetchKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchKey, fetchRange]);
 
@@ -357,11 +370,11 @@ export default function EconomicCalendar({
         <MonthGrid
           monthStart={rangeStart}
           events={filtered}
-          loading={loading}
+          loading={loading || pendingKey !== null}
         />
       ) : (
         <div className="max-h-[400px] overflow-y-auto">
-          {loading ? (
+          {loading || pendingKey !== null ? (
             <div className="p-8 text-center text-muted text-sm">Loading...</div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-muted text-sm">
