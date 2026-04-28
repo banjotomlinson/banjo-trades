@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendWaitlistNotification } from "@/lib/email/waitlist";
+import {
+  sendApplicantWelcome,
+  sendWaitlistNotification,
+} from "@/lib/email/waitlist";
 
 // Server-only client with the service role key so anon visitors can sign up
 // even if their browser session is null. RLS still owns who reads.
@@ -74,21 +77,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Count + email run in the background so the user's submission isn't
-  // blocked by a slow third-party API. Errors get logged inside the helper.
+  // Count + emails run in the background so the user's submission isn't
+  // blocked by slow third-party APIs. Errors get logged inside the helpers.
   (async () => {
     try {
       const { count } = await supa
         .from("waitlist_signups")
         .select("*", { count: "exact", head: true });
-      await sendWaitlistNotification({
-        name: cleanName,
-        email,
-        primaryAsset: cleanPrimaryAsset,
-        experience: cleanExperience,
-        painPoint: cleanPainPoint,
-        totalCount: count ?? 0,
-      });
+      const total = count ?? 0;
+      await Promise.all([
+        sendWaitlistNotification({
+          name: cleanName,
+          email,
+          primaryAsset: cleanPrimaryAsset,
+          experience: cleanExperience,
+          painPoint: cleanPainPoint,
+          totalCount: total,
+        }),
+        sendApplicantWelcome({
+          name: cleanName,
+          email,
+          position: total,
+        }),
+      ]);
     } catch (err) {
       console.error("[waitlist] notification pipeline failed", err);
     }

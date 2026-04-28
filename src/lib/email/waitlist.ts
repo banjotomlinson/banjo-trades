@@ -6,6 +6,7 @@ const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const FROM_ADDRESS = "TraderM8 Waitlist <onboarding@resend.dev>";
 const TO_ADDRESS = "banjotomlinson@gmail.com";
 const FREE_SPOT_CAP = 100;
+const APP_URL = "https://traderm8.vercel.app";
 
 interface SignupNotificationInput {
   name: string | null;
@@ -141,5 +142,148 @@ export async function sendWaitlistNotification(
     }
   } catch (err) {
     console.error("[waitlist] Resend send threw", err);
+  }
+}
+
+// ── Applicant-facing welcome email ─────────────────────────────────
+// First 100 applicants get a "you're in" email with a sign-in link.
+// Everyone after gets a "you're on the waitlist" email with no link.
+//
+// IMPORTANT: Resend's sandbox FROM (onboarding@resend.dev) only delivers
+// to the email of the Resend account owner. To deliver to other people
+// you must verify a domain in Resend (e.g. traderm8.com). Until then
+// these calls return 403/422 from Resend and just log — the admin email
+// to banjotomlinson@gmail.com still works fine.
+export async function sendApplicantWelcome(input: {
+  name: string | null;
+  email: string;
+  position: number;
+}): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.log("[waitlist] RESEND_API_KEY not set — skipping applicant email");
+    return;
+  }
+
+  const { name, email, position } = input;
+  const firstName = name?.split(/\s+/)[0] ?? null;
+  const greeting = firstName ? `Hey ${escape(firstName)},` : "Hey,";
+  const inCap = position <= FREE_SPOT_CAP;
+
+  const subject = inCap
+    ? `🎉 You're in — your TraderM8 spot is ready`
+    : `You're on the TraderM8 waitlist (#${position})`;
+
+  let body: { html: string; text: string };
+  if (inCap) {
+    const remaining = FREE_SPOT_CAP - position;
+    const text = [
+      greeting,
+      "",
+      `Welcome to TraderM8. You're applicant #${position} of ${FREE_SPOT_CAP} — locked into the free-for-life founder tier.`,
+      "",
+      `Click below to set up your account and dive in:`,
+      `${APP_URL}/login`,
+      "",
+      `Sign in with the Google account that uses ${email} so we can match you to your waitlist spot. If something feels off, just reply to this email.`,
+      "",
+      `${remaining} spot${remaining === 1 ? "" : "s"} remaining out of ${FREE_SPOT_CAP}.`,
+      "",
+      "— Banjo",
+    ].join("\n");
+    const html = `
+<!doctype html>
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0e17;color:#e2e8f0;margin:0;padding:32px;">
+  <div style="max-width:520px;margin:0 auto;background:#111827;border:1px solid #1e293b;border-radius:14px;overflow:hidden;">
+    <div style="padding:28px 32px;border-bottom:1px solid #1e293b;text-align:center;">
+      <div style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">Trader<span style="color:#3b82f6;">M8</span></div>
+      <div style="margin-top:6px;font-size:13px;color:#64748b;">Your mate of the market</div>
+    </div>
+    <div style="padding:28px 32px;">
+      <div style="display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:#22c55e;font-weight:700;background:rgba(34,197,94,0.12);padding:4px 10px;border-radius:999px;margin-bottom:16px;">
+        ✓ Spot #${position} of ${FREE_SPOT_CAP} confirmed
+      </div>
+      <div style="font-size:18px;color:#ffffff;font-weight:600;line-height:1.4;margin-bottom:14px;">${greeting}</div>
+      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
+        Welcome to TraderM8. You&rsquo;re locked into the free-for-life founder tier — every feature, free, forever, no card required.
+      </p>
+      <p style="font-size:15px;line-height:1.6;color:#94a3b8;margin:0 0 28px;">
+        Sign in with the Google account that uses <strong style="color:#e2e8f0;">${escape(email)}</strong> so we can match you to your waitlist spot.
+      </p>
+      <div style="text-align:center;margin-bottom:28px;">
+        <a href="${APP_URL}/login" style="display:inline-block;background:#3b82f6;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 28px;border-radius:8px;">
+          Sign in to TraderM8 →
+        </a>
+      </div>
+      <p style="font-size:12px;line-height:1.6;color:#64748b;margin:0 0 0;text-align:center;">
+        ${FREE_SPOT_CAP - position} ${FREE_SPOT_CAP - position === 1 ? "spot" : "spots"} remaining. Something feels off? Just reply to this email.
+      </p>
+    </div>
+    <div style="padding:18px 32px;border-top:1px solid #1e293b;background:#0f172a;font-size:11px;color:#475569;text-align:center;">
+      You're getting this because you joined the TraderM8 waitlist.
+    </div>
+  </div>
+</body></html>`.trim();
+    body = { html, text };
+  } else {
+    const text = [
+      greeting,
+      "",
+      `Thanks for joining the TraderM8 waitlist. Right now we're at capacity — you're #${position} in line.`,
+      "",
+      "We'll email you the moment a spot opens up. Nothing else you need to do for now.",
+      "",
+      "— Banjo",
+    ].join("\n");
+    const html = `
+<!doctype html>
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0e17;color:#e2e8f0;margin:0;padding:32px;">
+  <div style="max-width:520px;margin:0 auto;background:#111827;border:1px solid #1e293b;border-radius:14px;overflow:hidden;">
+    <div style="padding:28px 32px;border-bottom:1px solid #1e293b;text-align:center;">
+      <div style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">Trader<span style="color:#3b82f6;">M8</span></div>
+      <div style="margin-top:6px;font-size:13px;color:#64748b;">Your mate of the market</div>
+    </div>
+    <div style="padding:28px 32px;">
+      <div style="display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:#f59e0b;font-weight:700;background:rgba(245,158,11,0.12);padding:4px 10px;border-radius:999px;margin-bottom:16px;">
+        Waitlist · Position #${position}
+      </div>
+      <div style="font-size:18px;color:#ffffff;font-weight:600;line-height:1.4;margin-bottom:14px;">${greeting}</div>
+      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
+        Thanks for joining the TraderM8 waitlist. Right now we&rsquo;re at capacity — the first ${FREE_SPOT_CAP} traders have locked in the free-for-life founder tier.
+      </p>
+      <p style="font-size:15px;line-height:1.6;color:#94a3b8;margin:0 0 16px;">
+        You&rsquo;re <strong style="color:#e2e8f0;">#${position}</strong> in line. We&rsquo;ll email you the moment a spot opens up. Nothing else you need to do for now.
+      </p>
+    </div>
+    <div style="padding:18px 32px;border-top:1px solid #1e293b;background:#0f172a;font-size:11px;color:#475569;text-align:center;">
+      You're getting this because you joined the TraderM8 waitlist.
+    </div>
+  </div>
+</body></html>`.trim();
+    body = { html, text };
+  }
+
+  try {
+    const res = await fetch(RESEND_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: [email],
+        reply_to: TO_ADDRESS,
+        subject,
+        html: body.html,
+        text: body.text,
+      }),
+    });
+    if (!res.ok) {
+      const respBody = await res.text();
+      console.error("[waitlist] applicant email failed", res.status, respBody);
+    }
+  } catch (err) {
+    console.error("[waitlist] applicant email threw", err);
   }
 }

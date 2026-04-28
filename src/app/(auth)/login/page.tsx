@@ -1,11 +1,39 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+
+const ERROR_COPY: Record<string, string> = {
+  auth_failed:
+    "Sign-in didn't go through. Try again, and if it keeps happening let us know.",
+  not_on_waitlist:
+    "We couldn't find your email on the waitlist. Apply at /landing first — once you're approved, sign-in will work.",
+  past_cap:
+    "The closed beta is full. You're on the waitlist — we'll email you the moment a spot opens up.",
+  config:
+    "Server isn't quite set up. Hold tight.",
+  unknown: "Something went sideways. Try again in a moment.",
+  not_approved:
+    "Your spot isn't approved yet. Hang tight — we'll email you when it is.",
+};
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
+  const params = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const urlError = params.get("error");
+  const urlMessage = urlError ? (ERROR_COPY[urlError] ?? ERROR_COPY.unknown) : null;
+  const position = params.get("position");
+  const displayError = error ?? urlMessage;
 
   async function handleGoogleLogin() {
     setLoading(true);
@@ -40,9 +68,14 @@ export default function LoginPage() {
             Sign in to continue
           </h2>
 
-          {error && (
+          {displayError && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {error}
+              {displayError}
+              {position && urlError === "past_cap" && (
+                <div className="text-[#94a3b8] text-xs mt-1.5">
+                  Your waitlist position: #{position}
+                </div>
+              )}
             </div>
           )}
 
