@@ -3,7 +3,7 @@
 // RESEND_API_KEY isn't configured so local development never blocks on it.
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
-const FROM_ADDRESS = "TraderM8 Waitlist <onboarding@resend.dev>";
+const FROM_ADDRESS = "TraderM8 <hello@traderm8.com>";
 const TO_ADDRESS = "banjotomlinson@gmail.com";
 const FREE_SPOT_CAP = 100;
 const APP_URL = "https://traderm8.com";
