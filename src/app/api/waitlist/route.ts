@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendWaitlistNotification } from "@/lib/email/waitlist";
 
 // Server-only client with the service role key so anon visitors can sign up
 // even if their browser session is null. RLS still owns who reads.
@@ -46,18 +47,24 @@ export async function POST(req: NextRequest) {
 
   const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? "";
 
+  const cleanName = body.name?.trim().slice(0, 200) || null;
+  const cleanPrimaryAsset = body.primary_asset?.slice(0, 80) || null;
+  const cleanExperience = body.experience?.slice(0, 80) || null;
+  const cleanPainPoint = body.pain_point?.slice(0, 1000) || null;
+
   const { error } = await supa.from("waitlist_signups").insert({
     email,
-    name: body.name?.trim().slice(0, 200) || null,
-    primary_asset: body.primary_asset?.slice(0, 80) || null,
-    experience: body.experience?.slice(0, 80) || null,
-    pain_point: body.pain_point?.slice(0, 1000) || null,
+    name: cleanName,
+    primary_asset: cleanPrimaryAsset,
+    experience: cleanExperience,
+    pain_point: cleanPainPoint,
     source: body.source?.slice(0, 80) || null,
     user_agent: userAgent,
   });
 
   if (error) {
-    // Unique violation = already signed up. Treat as success.
+    // Unique violation = already signed up. Treat as success — but don't
+    // re-fire the email (Banjo already got one when they originally joined).
     if (error.code === "23505") {
       return NextResponse.json({ ok: true, alreadyJoined: true });
     }
@@ -66,6 +73,26 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+
+  // Count + email run in the background so the user's submission isn't
+  // blocked by a slow third-party API. Errors get logged inside the helper.
+  (async () => {
+    try {
+      const { count } = await supa
+        .from("waitlist_signups")
+        .select("*", { count: "exact", head: true });
+      await sendWaitlistNotification({
+        name: cleanName,
+        email,
+        primaryAsset: cleanPrimaryAsset,
+        experience: cleanExperience,
+        painPoint: cleanPainPoint,
+        totalCount: count ?? 0,
+      });
+    } catch (err) {
+      console.error("[waitlist] notification pipeline failed", err);
+    }
+  })();
 
   return NextResponse.json({ ok: true });
 }
