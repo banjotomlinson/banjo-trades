@@ -20,8 +20,8 @@ export default function LandingPage() {
       <FeatureGrid />
       <Reviews />
       <FounderNote />
-      <Waitlist />
       <FAQ />
+      <Waitlist />
       <Footer />
     </main>
   );
