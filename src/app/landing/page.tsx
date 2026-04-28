@@ -346,8 +346,9 @@ function FounderNote() {
             Built by a trader, for traders.
           </h2>
           <p className="mt-5 text-base text-[#94a3b8] leading-relaxed">
-            <strong className="text-white">Banjo Tomlinson</strong> designed and
-            shipped TraderM8 from scratch, day-by-day in public. Every panel on
+            <strong className="text-white">Banjo Tomlinson</strong>
+            {" "}designed and shipped TraderM8 from scratch, day-by-day in
+            public. Every panel on
             this dashboard exists because of a personal frustration with the
             tools already out there — fourteen tabs at NY open, journals that
             lied, sizing math done in his head between candles. He&apos;s an
