@@ -6,7 +6,7 @@ const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const FROM_ADDRESS = "TraderM8 Waitlist <onboarding@resend.dev>";
 const TO_ADDRESS = "banjotomlinson@gmail.com";
 const FREE_SPOT_CAP = 100;
-const APP_URL = "https://traderm8.vercel.app";
+const APP_URL = "https://traderm8.com";
 
 interface SignupNotificationInput {
   name: string | null;
