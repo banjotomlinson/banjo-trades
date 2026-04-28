@@ -375,7 +375,7 @@ function FounderNote() {
             </div>
             <span className="hidden sm:inline-block w-px h-8 bg-white/10" />
             <a
-              href="https://www.instagram.com/banjotomlinson/"
+              href="https://www.instagram.com/traderm8.offical/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-md border border-white/10 hover:border-[#3b82f6]/50 hover:bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-white transition-colors"

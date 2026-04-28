@@ -1,0 +1,73 @@
+{
+  "folders": [
+    {
+      "name": "TraderM8",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.eol": "\n",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "files.exclude": {
+      "**/.next": true,
+      "**/node_modules": true,
+      "**/.vercel": true
+    },
+    "search.exclude": {
+      "**/.next": true,
+      "**/node_modules": true,
+      "**/.vercel": true,
+      "**/package-lock.json": true
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "tailwindCSS.classAttributes": ["class", "className", "ngClass"],
+    "tailwindCSS.experimental.classRegex": [
+      ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss",
+      "dbaeumer.vscode-eslint",
+      "supabase.supabase-vscode",
+      "ms-vscode.vscode-typescript-next"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "dev: start local server",
+        "type": "shell",
+        "command": "npm run dev",
+        "isBackground": true,
+        "presentation": { "reveal": "always", "panel": "dedicated" },
+        "problemMatcher": []
+      },
+      {
+        "label": "deploy: production",
+        "type": "shell",
+        "command": "vercel deploy --prod --yes",
+        "presentation": { "reveal": "always" },
+        "problemMatcher": []
+      },
+      {
+        "label": "typecheck",
+        "type": "shell",
+        "command": "npx tsc --noEmit",
+        "problemMatcher": ["$tsc"]
+      },
+      {
+        "label": "build: production",
+        "type": "shell",
+        "command": "npm run build",
+        "problemMatcher": []
+      }
+    ]
+  }
+}
