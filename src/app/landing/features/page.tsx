@@ -6,8 +6,8 @@ import {
   Nav,
   SectionHeader,
   Spotlight,
-  SPOTLIGHTS,
 } from "../_components";
+import { SPOTLIGHTS } from "../_spotlights";
 
 export const metadata: Metadata = {
   title: "Features · TraderM8",
