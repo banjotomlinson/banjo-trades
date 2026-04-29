@@ -230,6 +230,44 @@ export default function EconomicCalendar({
     return true;
   });
 
+  // Weekly view groups events under per-day headers, using the user's
+  // chosen timezone so an event at 23:30 ET shows under the right day for
+  // a Brisbane viewer. Daily view stays flat (single day already implied).
+  const weeklyGroups = useMemo(() => {
+    if (view !== "weekly") return null;
+    const dateKeyFmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "numeric",
+    });
+    const dayLabelFmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+    const sorted = [...filtered].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const groups = new Map<string, { label: string; events: CalendarEvent[] }>();
+    for (const e of sorted) {
+      const d = new Date(e.date);
+      const key = dateKeyFmt.format(d); // YYYY-MM-DD in tz
+      const existing = groups.get(key);
+      if (existing) {
+        existing.events.push(e);
+      } else {
+        groups.set(key, { label: dayLabelFmt.format(d), events: [e] });
+      }
+    }
+    return Array.from(groups.entries()).map(([key, value]) => ({
+      key,
+      label: value.label,
+      events: value.events,
+    }));
+  }, [filtered, view, tz]);
+
   const dateLabel =
     view === "daily"
       ? baseDate.toLocaleDateString("en-US", {
@@ -398,58 +436,79 @@ export default function EconomicCalendar({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((event, i) => {
-                const eb = biasForEvent(event);
-                return (
-                  <tr
-                    key={i}
-                    className="border-b border-border/50 hover:bg-white/[0.02] transition-colors"
-                    title={eb.watchFor}
-                  >
-                    <td className="px-5 py-3">
-                      <span
-                        className={`inline-block w-2.5 h-2.5 rounded-full ${
-                          IMPACT_COLORS[event.impact]
-                        }`}
-                      />
-                    </td>
-                    <td className="px-3 py-3 text-muted whitespace-nowrap">
-                      {new Date(event.date).toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                        timeZone: tz,
-                      })}
-                    </td>
-                    <td className="px-3 py-3 font-medium">{event.title}</td>
-                    <td className="px-3 py-3 text-right text-muted">
-                      {event.forecast || "-"}
-                    </td>
-                    <td className="px-3 py-3 text-right text-muted">
-                      {event.previous || "-"}
-                    </td>
-                    <td className="px-3 py-3 text-right font-semibold">
-                      {event.actual || "-"}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <span
-                        className={`inline-flex items-center gap-1 text-xs font-semibold ${BIAS_STYLE[eb.bias].text}`}
+              {view === "weekly" && weeklyGroups
+                ? weeklyGroups.flatMap((group) => [
+                    <tr
+                      key={`hdr-${group.key}`}
+                      className="bg-background/60 sticky top-0 z-10"
+                    >
+                      <td
+                        colSpan={7}
+                        className="px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-accent border-b border-border"
                       >
-                        <span
-                          className={`inline-block w-1.5 h-1.5 rounded-full ${BIAS_STYLE[eb.bias].dot}`}
-                        />
-                        {BIAS_STYLE[eb.bias].label}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                        {group.label}
+                      </td>
+                    </tr>,
+                    ...group.events.map((event, i) =>
+                      renderEventRow(event, `${group.key}-${i}`, tz)
+                    ),
+                  ])
+                : filtered.map((event, i) => renderEventRow(event, i, tz))}
               </tbody>
             </table>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+function renderEventRow(
+  event: CalendarEvent,
+  key: string | number,
+  tz: string
+) {
+  const eb = biasForEvent(event);
+  return (
+    <tr
+      key={key}
+      className="border-b border-border/50 hover:bg-white/[0.02] transition-colors"
+      title={eb.watchFor}
+    >
+      <td className="px-5 py-3">
+        <span
+          className={`inline-block w-2.5 h-2.5 rounded-full ${IMPACT_COLORS[event.impact]}`}
+        />
+      </td>
+      <td className="px-3 py-3 text-muted whitespace-nowrap">
+        {new Date(event.date).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+          timeZone: tz,
+        })}
+      </td>
+      <td className="px-3 py-3 font-medium">{event.title}</td>
+      <td className="px-3 py-3 text-right text-muted">
+        {event.forecast || "-"}
+      </td>
+      <td className="px-3 py-3 text-right text-muted">
+        {event.previous || "-"}
+      </td>
+      <td className="px-3 py-3 text-right font-semibold">
+        {event.actual || "-"}
+      </td>
+      <td className="px-5 py-3 text-right">
+        <span
+          className={`inline-flex items-center gap-1 text-xs font-semibold ${BIAS_STYLE[eb.bias].text}`}
+        >
+          <span
+            className={`inline-block w-1.5 h-1.5 rounded-full ${BIAS_STYLE[eb.bias].dot}`}
+          />
+          {BIAS_STYLE[eb.bias].label}
+        </span>
+      </td>
+    </tr>
   );
 }
 

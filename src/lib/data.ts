@@ -2,6 +2,7 @@
  * Server-side data fetching functions for the dashboard.
  * These run during SSR so the page renders with data on first paint.
  */
+import { correctImpact } from "@/lib/calendarImpact";
 
 export interface NewsItem {
   id: number;
@@ -125,7 +126,7 @@ export async function fetchCalendarEvents(): Promise<CalendarEvent[]> {
         date: e.time.includes("T")
           ? e.time
           : `${e.time.replace(" ", "T")}Z`,
-        impact: e.impact.toLowerCase() as "high" | "medium" | "low",
+        impact: correctImpact(e.event, e.impact),
         forecast: formatVal(e.estimate, e.unit),
         previous: formatVal(e.prev, e.unit),
         actual: formatVal(e.actual, e.unit),

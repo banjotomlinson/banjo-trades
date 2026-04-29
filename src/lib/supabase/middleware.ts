@@ -37,7 +37,10 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    // Anonymous visit to the apex domain → marketing landing page.
+    // Anonymous deep-link to a protected route → /login so they can sign
+    // in and return to that route.
+    url.pathname = request.nextUrl.pathname === "/" ? "/landing" : "/login";
     return NextResponse.redirect(url);
   }
 
