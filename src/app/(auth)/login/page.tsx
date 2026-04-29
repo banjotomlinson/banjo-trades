@@ -1,15 +1,39 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+
+const ERROR_COPY: Record<string, string> = {
+  auth_failed:
+    "Sign-in didn't go through. Try again, and if it keeps happening let us know.",
+  not_on_waitlist:
+    "We couldn't find your email on the waitlist. Apply at /landing first — once you're approved, sign-in will work.",
+  past_cap:
+    "The closed beta is full. You're on the waitlist — we'll email you the moment a spot opens up.",
+  config:
+    "Server isn't quite set up. Hold tight.",
+  unknown: "Something went sideways. Try again in a moment.",
+  not_approved:
+    "Your spot isn't approved yet. Hang tight — we'll email you when it is.",
+};
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
+  const params = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const urlError = params.get("error");
+  const urlMessage = urlError ? (ERROR_COPY[urlError] ?? ERROR_COPY.unknown) : null;
+  const position = params.get("position");
+  const displayError = error ?? urlMessage;
 
   async function handleGoogleLogin() {
     setLoading(true);
@@ -27,163 +51,33 @@ export default function LoginPage() {
     }
   }
 
-  async function handleEmailAuth(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const supabase = createClient();
-
-    if (mode === "signup") {
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        setLoading(false);
-        return;
-      }
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { email },
-        },
-      });
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
-      if (data.user && !data.session) {
-        const identities = data.user.identities ?? [];
-        if (identities.length === 0) {
-          const { data: signInData } = await supabase.auth.signInWithPassword({ email, password: "" }).catch(() => ({ data: null }));
-          if (!signInData?.session) {
-            setError("An account with this email already exists. Try signing in with Google instead.");
-          }
-          setLoading(false);
-          return;
-        }
-        setError("Account created but could not log in automatically. Please sign in.");
-        setMode("login");
-        setLoading(false);
-        return;
-      }
-      if (data.session) {
-        window.location.href = "/";
-      } else {
-        setLoading(false);
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        const msg = error.message.toLowerCase();
-        if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
-          setError("Invalid email or password. If you signed up with Google, use the Google button below instead.");
-        } else {
-          setError(error.message);
-        }
-        setLoading(false);
-        return;
-      }
-      window.location.href = "/";
-    }
-  }
-
   return (
     <div className="min-h-screen bg-[#0a0e17] flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            Banjo <span className="text-[#3b82f6]">Trades</span>
+            Trader<span className="text-[#3b82f6]">M8</span>
           </h1>
           <p className="text-[#64748b] text-sm mt-2">
-            Trading dashboard &amp; analysis toolkit
+            Your mate of the market
           </p>
         </div>
 
         <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-8">
           <h2 className="text-lg font-semibold text-white mb-6 text-center">
-            {mode === "login" ? "Sign in to continue" : "Create an account"}
+            Sign in to continue
           </h2>
 
-          {error && (
+          {displayError && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {error}
+              {displayError}
+              {position && urlError === "past_cap" && (
+                <div className="text-[#94a3b8] text-xs mt-1.5">
+                  Your waitlist position: #{position}
+                </div>
+              )}
             </div>
           )}
-
-          <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
-            <div>
-              <label htmlFor="email" className="block text-xs font-medium text-[#94a3b8] mb-1.5">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full bg-[#0a0e17] border border-[#1e293b] rounded-lg px-3 py-2.5 text-white text-sm placeholder-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-xs font-medium text-[#94a3b8] mb-1.5">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full bg-[#0a0e17] border border-[#1e293b] rounded-lg px-3 py-2.5 text-white text-sm placeholder-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
-                placeholder="Min 6 characters"
-              />
-            </div>
-            {mode === "signup" && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-xs font-medium text-[#94a3b8] mb-1.5">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className={`w-full bg-[#0a0e17] border rounded-lg px-3 py-2.5 text-white text-sm placeholder-[#475569] focus:outline-none transition-colors ${
-                    confirmPassword && password !== confirmPassword
-                      ? "border-red-500/50 focus:border-red-500"
-                      : "border-[#1e293b] focus:border-[#3b82f6]"
-                  }`}
-                  placeholder="Re-enter your password"
-                />
-                {confirmPassword && password !== confirmPassword && (
-                  <p className="text-red-400 text-xs mt-1.5">Passwords do not match</p>
-                )}
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={loading || (mode === "signup" && password !== confirmPassword)}
-              className="w-full bg-[#3b82f6] text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-[#2563eb] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
-            </button>
-          </form>
-
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#1e293b]" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-[#111827] px-3 text-[#475569]">or</span>
-            </div>
-          </div>
 
           <button
             onClick={handleGoogleLogin}
@@ -212,16 +106,6 @@ export default function LoginPage() {
           </button>
 
           <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(null); setConfirmPassword(""); }}
-              className="text-[#3b82f6] text-sm hover:underline"
-            >
-              {mode === "login" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-            </button>
-          </div>
-
-          <div className="mt-4 text-center">
             <p className="text-[#475569] text-xs">
               By signing in, you agree to our terms of service
             </p>

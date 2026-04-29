@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { correctImpact } from "@/lib/calendarImpact";
 
 interface FinnhubCalendarEvent {
   country: string;
@@ -64,7 +65,7 @@ async function fetchFinnhub(
         date: e.time.includes("T")
           ? e.time
           : `${e.time.replace(" ", "T")}Z`,
-        impact: e.impact.toLowerCase() as "high" | "medium" | "low",
+        impact: correctImpact(e.event, e.impact),
         forecast: formatVal(e.estimate, e.unit),
         previous: formatVal(e.prev, e.unit),
         actual: formatVal(e.actual, e.unit),

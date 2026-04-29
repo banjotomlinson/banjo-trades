@@ -148,9 +148,7 @@ function getSessionStatus(session: SessionKey, targetDate: Date): "live" | "upco
 }
 
 async function fetchYahoo(symbol: string): Promise<YahooCandles> {
-  const url = `https://corsproxy.io/?${encodeURIComponent(
-    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=5m&range=5d`
-  )}`;
+  const url = `/api/yahoo?symbol=${encodeURIComponent(symbol)}&interval=5m&range=5d`;
   const res = await fetch(url);
   const json = await res.json();
   const result = json.chart?.result?.[0];

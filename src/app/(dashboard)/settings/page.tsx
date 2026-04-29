@@ -36,6 +36,24 @@ const TZ_OPTIONS = [
   { val: "Pacific/Auckland", label: "Auckland (NZST)" },
 ];
 
+// Pushes the chosen timezone into localStorage + fires the change event so
+// the rest of the app (calendar, countdown, etc.) re-renders immediately.
+// "auto" removes the override so useTimezone() falls back to the browser
+// resolved zone.
+function syncTimezoneToApp(value: string) {
+  if (typeof window === "undefined") return;
+  try {
+    if (value === "auto" || !value) {
+      window.localStorage.removeItem("banjoTZ");
+    } else {
+      window.localStorage.setItem("banjoTZ", value);
+    }
+    window.dispatchEvent(new Event("traderm8:tz:change"));
+  } catch {
+    // ignore quota / privacy mode
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Accordion section definitions
 // ---------------------------------------------------------------------------
@@ -115,7 +133,9 @@ export default function SettingsPage() {
           .then(({ data: profile }) => {
             if (profile) {
               setDisplayName(profile.display_name || data.user?.user_metadata?.full_name || "");
-              setTimezone(profile.timezone || "auto");
+              const initialTz = profile.timezone || "auto";
+              setTimezone(initialTz);
+              syncTimezoneToApp(initialTz);
             } else {
               setDisplayName(data.user?.user_metadata?.full_name || "");
             }
@@ -207,6 +227,7 @@ export default function SettingsPage() {
     (value: string) => {
       setTimezone(value);
       saveProfile(displayName, value);
+      syncTimezoneToApp(value);
     },
     [displayName, saveProfile]
   );

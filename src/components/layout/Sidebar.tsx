@@ -14,10 +14,13 @@ import {
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "⊞", href: "/" },
-  { id: "calendar", label: "Calendar", icon: "📅", href: "/calendar" },
+  { id: "calendar", label: "Economic Calendar", icon: "📅", href: "/calendar" },
   { id: "movers", label: "Market Movers", icon: "📈", href: "/movers" },
+  { id: "seasonality", label: "Seasonality", icon: "🍂", href: "/seasonality" },
   { id: "liquidity", label: "Liquidity", icon: "💧", href: "/liquidity" },
   { id: "journal", label: "Journal", icon: "📓", href: "/journal" },
+  { id: "planner", label: "Planner", icon: "🗒️", href: "/planner" },
+  { id: "feedback", label: "Feedback", icon: "💬", href: "/feedback" },
 ];
 
 export default function Sidebar() {
@@ -81,7 +84,7 @@ export default function Sidebar() {
           </button>
           {!collapsed && (
             <span className="ml-3 text-base font-bold whitespace-nowrap" style={{ color: theme.text }}>
-              Banjo <span style={{ color: theme.accent }}>Trades</span>
+              Trader<span style={{ color: theme.accent }}>M8</span>
             </span>
           )}
         </div>

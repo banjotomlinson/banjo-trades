@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/callback", "/api/"];
+const PUBLIC_ROUTES = ["/login", "/callback", "/api/", "/landing", "/popouts"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -37,7 +37,10 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    // Anonymous visit to the apex domain → marketing landing page.
+    // Anonymous deep-link to a protected route → /login so they can sign
+    // in and return to that route.
+    url.pathname = request.nextUrl.pathname === "/" ? "/landing" : "/login";
     return NextResponse.redirect(url);
   }
 

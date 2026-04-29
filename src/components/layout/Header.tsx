@@ -17,21 +17,36 @@ function MarketStatus() {
       const day = et.getDay();
       const mins = h * 60 + m;
 
-      if (day === 0 || day === 6) {
+      // Equity sessions don't trade Saturdays. Asia reopens Sunday 18:00 ET.
+      const isSaturday = day === 6;
+      const isSundayBeforeAsia = day === 0 && mins < 18 * 60;
+      if (isSaturday || isSundayBeforeAsia) {
         setStatus("WEEKEND");
         setDotClass("bg-[#64748b]");
-      } else if (mins >= 570 && mins < 960) {
-        setStatus("MARKET OPEN");
+        return;
+      }
+
+      // Global session windows in ET. Colors match the rest of the app's
+      // session palette (Asia = purple, London = blue, NY = green).
+      if (mins >= 9 * 60 + 30 && mins < 16 * 60) {
+        setStatus("NEW YORK");
         setDotClass("bg-[#22c55e]");
-      } else if (mins >= 240 && mins < 570) {
-        setStatus("PRE-MARKET");
+      } else if (mins >= 8 * 60 && mins < 9 * 60 + 30) {
+        setStatus("LONDON / NY");
         setDotClass("bg-[#f59e0b]");
-      } else if (mins >= 960 && mins < 1200) {
+      } else if (mins >= 3 * 60 && mins < 8 * 60) {
+        setStatus("LONDON");
+        setDotClass("bg-[#3b82f6]");
+      } else if (mins >= 18 * 60 || mins < 2 * 60) {
+        setStatus("ASIA");
+        setDotClass("bg-[#a855f7]");
+      } else if (mins >= 16 * 60 && mins < 18 * 60) {
         setStatus("AFTER HOURS");
         setDotClass("bg-[#f59e0b]");
       } else {
-        setStatus("CLOSED");
-        setDotClass("bg-[#ef4444]");
+        // 02:00–03:00 ET: Asia closed, London not yet open.
+        setStatus("MARKETS QUIET");
+        setDotClass("bg-[#64748b]");
       }
     }
     update();

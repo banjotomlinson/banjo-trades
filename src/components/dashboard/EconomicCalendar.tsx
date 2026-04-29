@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/data";
 import { biasForEvent, summarizeDay, type Bias } from "@/lib/eventBias";
+import { useCalendarFilter } from "@/components/providers/CalendarFilterProvider";
+import { useTimezone } from "@/lib/useTimezone";
 
 function ymd(d: Date): string {
   const y = d.getFullYear();
@@ -85,35 +87,27 @@ export default function EconomicCalendar({
   const [loading, setLoading] = useState(!hasInitial);
   const [dateOffset, setDateOffset] = useState(0);
 
-  // Currency multi-select. "all" = unfiltered. Seeds from `category` when
-  // provided (dashboard embeds), otherwise "all" (calendar page).
-  const [currencySelection, setCurrencySelection] = useState<
-    "all" | Set<string>
-  >(() => {
-    if (category) {
-      const cats = CATEGORY_CURRENCIES[category];
-      if (cats === "all") return "all";
-      return new Set(cats);
-    }
-    return "all";
-  });
+  // Currency multi-select lives in a dashboard-scoped provider so the
+  // countdown on the home page can filter by the same selection.
+  const {
+    selection: currencySelection,
+    setSelection: setCurrencySelection,
+    toggleCurrency,
+    matches: matchesCategory,
+  } = useCalendarFilter();
 
-  const matchesCategory = useCallback(
-    (country: string) =>
-      currencySelection === "all" ? true : currencySelection.has(country),
-    [currencySelection]
-  );
+  const tz = useTimezone();
 
-  const toggleCurrency = useCallback((c: string) => {
-    setCurrencySelection((prev) => {
-      if (prev === "all") return new Set([c]);
-      const next = new Set(prev);
-      if (next.has(c)) next.delete(c);
-      else next.add(c);
-      if (next.size === 0) return "all";
-      return next;
-    });
-  }, []);
+  // When the parent embeds this calendar with a fixed category, seed the
+  // provider on first mount so the user arrives pre-filtered (but is then
+  // free to widen the selection).
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !category) return;
+    seededRef.current = true;
+    const cats = CATEGORY_CURRENCIES[category];
+    setCurrencySelection(cats === "all" ? "all" : [...cats]);
+  }, [category, setCurrencySelection]);
 
   const availableCurrencies = useMemo(() => {
     // Always expose the top 10 so the picker is stable even before events load.
@@ -125,28 +119,41 @@ export default function EconomicCalendar({
   // month navigation is idempotent and cheap.
   const loadedRanges = useRef<Set<string>>(new Set());
 
-  const fetchRange = useCallback(async (from: string, to: string) => {
-    const key = `${from}_${to}`;
-    if (loadedRanges.current.has(key)) return;
-    loadedRanges.current.add(key);
-    try {
-      const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const incoming: CalendarEvent[] = data.events || [];
-      // Merge into current events, deduped by (date|country|impact|title).
-      setEvents((prev) => {
-        const seen = new Map<string, CalendarEvent>();
-        for (const e of prev) seen.set(eventKey(e), e);
-        for (const e of incoming) seen.set(eventKey(e), e);
-        return Array.from(seen.values());
-      });
-    } catch {
-      loadedRanges.current.delete(key); // allow retry on transient failure
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Tracks which view-window we're currently waiting on so we can show a
+  // single loading state for the whole grid instead of letting partial
+  // events pop in mid-fetch.
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+
+  const fetchRange = useCallback(
+    async (from: string, to: string, forKey?: string) => {
+      const cacheKey = `${from}_${to}`;
+      if (loadedRanges.current.has(cacheKey)) {
+        if (forKey) setPendingKey((p) => (p === forKey ? null : p));
+        return;
+      }
+      loadedRanges.current.add(cacheKey);
+      if (forKey) setPendingKey(forKey);
+      try {
+        const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const incoming: CalendarEvent[] = data.events || [];
+        // Merge into current events, deduped by (date|country|impact|title).
+        setEvents((prev) => {
+          const seen = new Map<string, CalendarEvent>();
+          for (const e of prev) seen.set(eventKey(e), e);
+          for (const e of incoming) seen.set(eventKey(e), e);
+          return Array.from(seen.values());
+        });
+      } catch {
+        loadedRanges.current.delete(cacheKey); // allow retry on transient failure
+      } finally {
+        setLoading(false);
+        if (forKey) setPendingKey((p) => (p === forKey ? null : p));
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     // Only fetch default window on mount if we had no initial data
@@ -211,7 +218,7 @@ export default function EconomicCalendar({
       to = new Date(rangeEnd);
       to.setDate(to.getDate() + 14);
     }
-    fetchRange(ymd(from), ymd(to));
+    fetchRange(ymd(from), ymd(to), fetchKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchKey, fetchRange]);
 
@@ -222,6 +229,44 @@ export default function EconomicCalendar({
     if (t < rangeStart.getTime() || t >= rangeEnd.getTime()) return false;
     return true;
   });
+
+  // Weekly view groups events under per-day headers, using the user's
+  // chosen timezone so an event at 23:30 ET shows under the right day for
+  // a Brisbane viewer. Daily view stays flat (single day already implied).
+  const weeklyGroups = useMemo(() => {
+    if (view !== "weekly") return null;
+    const dateKeyFmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "numeric",
+    });
+    const dayLabelFmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+    const sorted = [...filtered].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const groups = new Map<string, { label: string; events: CalendarEvent[] }>();
+    for (const e of sorted) {
+      const d = new Date(e.date);
+      const key = dateKeyFmt.format(d); // YYYY-MM-DD in tz
+      const existing = groups.get(key);
+      if (existing) {
+        existing.events.push(e);
+      } else {
+        groups.set(key, { label: dayLabelFmt.format(d), events: [e] });
+      }
+    }
+    return Array.from(groups.entries()).map(([key, value]) => ({
+      key,
+      label: value.label,
+      events: value.events,
+    }));
+  }, [filtered, view, tz]);
 
   const dateLabel =
     view === "daily"
@@ -310,7 +355,7 @@ export default function EconomicCalendar({
           </button>
           {availableCurrencies.map((c) => {
             const active =
-              currencySelection !== "all" && currencySelection.has(c);
+              currencySelection !== "all" && currencySelection.includes(c);
             return (
               <button
                 key={c}
@@ -366,11 +411,12 @@ export default function EconomicCalendar({
         <MonthGrid
           monthStart={rangeStart}
           events={filtered}
-          loading={loading}
+          loading={loading || pendingKey !== null}
+          timezone={tz}
         />
       ) : (
         <div className="max-h-[400px] overflow-y-auto">
-          {loading ? (
+          {loading || pendingKey !== null ? (
             <div className="p-8 text-center text-muted text-sm">Loading...</div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-muted text-sm">
@@ -390,57 +436,79 @@ export default function EconomicCalendar({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((event, i) => {
-                const eb = biasForEvent(event);
-                return (
-                  <tr
-                    key={i}
-                    className="border-b border-border/50 hover:bg-white/[0.02] transition-colors"
-                    title={eb.watchFor}
-                  >
-                    <td className="px-5 py-3">
-                      <span
-                        className={`inline-block w-2.5 h-2.5 rounded-full ${
-                          IMPACT_COLORS[event.impact]
-                        }`}
-                      />
-                    </td>
-                    <td className="px-3 py-3 text-muted whitespace-nowrap">
-                      {new Date(event.date).toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
-                    </td>
-                    <td className="px-3 py-3 font-medium">{event.title}</td>
-                    <td className="px-3 py-3 text-right text-muted">
-                      {event.forecast || "-"}
-                    </td>
-                    <td className="px-3 py-3 text-right text-muted">
-                      {event.previous || "-"}
-                    </td>
-                    <td className="px-3 py-3 text-right font-semibold">
-                      {event.actual || "-"}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <span
-                        className={`inline-flex items-center gap-1 text-xs font-semibold ${BIAS_STYLE[eb.bias].text}`}
+              {view === "weekly" && weeklyGroups
+                ? weeklyGroups.flatMap((group) => [
+                    <tr
+                      key={`hdr-${group.key}`}
+                      className="bg-background/60 sticky top-0 z-10"
+                    >
+                      <td
+                        colSpan={7}
+                        className="px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-accent border-b border-border"
                       >
-                        <span
-                          className={`inline-block w-1.5 h-1.5 rounded-full ${BIAS_STYLE[eb.bias].dot}`}
-                        />
-                        {BIAS_STYLE[eb.bias].label}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                        {group.label}
+                      </td>
+                    </tr>,
+                    ...group.events.map((event, i) =>
+                      renderEventRow(event, `${group.key}-${i}`, tz)
+                    ),
+                  ])
+                : filtered.map((event, i) => renderEventRow(event, i, tz))}
               </tbody>
             </table>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+function renderEventRow(
+  event: CalendarEvent,
+  key: string | number,
+  tz: string
+) {
+  const eb = biasForEvent(event);
+  return (
+    <tr
+      key={key}
+      className="border-b border-border/50 hover:bg-white/[0.02] transition-colors"
+      title={eb.watchFor}
+    >
+      <td className="px-5 py-3">
+        <span
+          className={`inline-block w-2.5 h-2.5 rounded-full ${IMPACT_COLORS[event.impact]}`}
+        />
+      </td>
+      <td className="px-3 py-3 text-muted whitespace-nowrap">
+        {new Date(event.date).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+          timeZone: tz,
+        })}
+      </td>
+      <td className="px-3 py-3 font-medium">{event.title}</td>
+      <td className="px-3 py-3 text-right text-muted">
+        {event.forecast || "-"}
+      </td>
+      <td className="px-3 py-3 text-right text-muted">
+        {event.previous || "-"}
+      </td>
+      <td className="px-3 py-3 text-right font-semibold">
+        {event.actual || "-"}
+      </td>
+      <td className="px-5 py-3 text-right">
+        <span
+          className={`inline-flex items-center gap-1 text-xs font-semibold ${BIAS_STYLE[eb.bias].text}`}
+        >
+          <span
+            className={`inline-block w-1.5 h-1.5 rounded-full ${BIAS_STYLE[eb.bias].dot}`}
+          />
+          {BIAS_STYLE[eb.bias].label}
+        </span>
+      </td>
+    </tr>
   );
 }
 
@@ -463,10 +531,12 @@ function MonthGrid({
   monthStart,
   events,
   loading,
+  timezone,
 }: {
   monthStart: Date;
   events: CalendarEvent[];
   loading: boolean;
+  timezone: string;
 }) {
   // 42-cell grid beginning on the Sunday on/before the 1st.
   const gridStart = new Date(monthStart);
@@ -536,7 +606,10 @@ function MonthGrid({
         const col = i % 7;
         const row = Math.floor(i / 7);
         const tipSide = col >= 4 ? "right-0" : "left-0";
-        const tipVert = row >= 3 ? "bottom-full mb-1" : "top-full mt-1";
+        // Tooltip touches the cell edge (no margin gap) so the cursor can
+        // travel from cell to tooltip without leaving either, which would
+        // otherwise drop the group-hover state.
+        const tipVert = row >= 3 ? "bottom-full" : "top-full";
 
         return (
           <div
@@ -595,7 +668,7 @@ function MonthGrid({
 
             {hasEvents && (
               <div
-                className={`pointer-events-none absolute ${tipVert} ${tipSide} w-[320px] z-50 opacity-0 group-hover:opacity-100 transition-opacity bg-panel border border-border rounded-lg shadow-xl p-3 text-left`}
+                className={`invisible opacity-0 group-hover:visible group-hover:opacity-100 hover:visible hover:opacity-100 absolute ${tipVert} ${tipSide} w-[320px] z-50 transition-opacity bg-panel border border-border rounded-lg shadow-xl p-3 text-left`}
               >
                 <div className="flex items-center justify-between mb-2 pb-2 border-b border-border">
                   <div className="text-xs font-semibold text-foreground">
@@ -632,6 +705,7 @@ function MonthGrid({
                                   hour: "2-digit",
                                   minute: "2-digit",
                                   hour12: true,
+                                  timeZone: timezone,
                                 })}
                               </span>
                               <span className="text-muted">{e.country}</span>
