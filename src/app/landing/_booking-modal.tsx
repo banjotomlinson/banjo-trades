@@ -159,6 +159,19 @@ export default function BookingModal({ open, onClose }: BookingModalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDayKey]);
 
+  const timeSlots: Date[] = useMemo(() => {
+    if (!selectedDay) return [];
+    const slots: Date[] = [];
+    for (let h = DAY_START_HOUR; h < DAY_END_HOUR; h++) {
+      for (let m = 0; m < 60; m += SLOT_MINUTES) {
+        const s = buildSlot(selectedDay.y, selectedDay.m, selectedDay.d, h, m);
+        if (s.getTime() > Date.now()) slots.push(s);
+      }
+    }
+    return slots;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDayKey]);
+
   if (!open) return null;
 
   const totalDays = daysInMonth(viewMonth.y, viewMonth.m);
@@ -187,19 +200,6 @@ export default function BookingModal({ open, onClose }: BookingModalProps) {
     setSelectedSlot(null);
     setStep("time");
   }
-
-  const timeSlots: Date[] = useMemo(() => {
-    if (!selectedDay) return [];
-    const slots: Date[] = [];
-    for (let h = DAY_START_HOUR; h < DAY_END_HOUR; h++) {
-      for (let m = 0; m < 60; m += SLOT_MINUTES) {
-        const s = buildSlot(selectedDay.y, selectedDay.m, selectedDay.d, h, m);
-        if (s.getTime() > Date.now()) slots.push(s);
-      }
-    }
-    return slots;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDayKey]);
 
   function pickSlot(s: Date) {
     if (bookedSlots.has(s.toISOString())) return;
