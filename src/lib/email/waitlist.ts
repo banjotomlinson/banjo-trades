@@ -180,47 +180,109 @@ export async function sendApplicantWelcome(input: {
     const text = [
       greeting,
       "",
-      `Welcome to TraderM8. You're applicant #${position} of ${FREE_SPOT_CAP} — locked into the free-for-life founder tier.`,
+      `You're in. Spot #${position} of ${FREE_SPOT_CAP} is yours — locked into the free-for-life founder tier. Every feature, free, forever, no card required.`,
       "",
-      `Click below to set up your account and dive in:`,
-      `${APP_URL}/login`,
+      "→ Sign in to TraderM8:",
+      `   ${APP_URL}/login`,
       "",
-      `Sign in with the Google account that uses ${email} so we can match you to your waitlist spot. If something feels off, just reply to this email.`,
+      `Sign in with the Google account that uses ${email} so we can match you to your waitlist spot.`,
+      "",
+      "── A note from Banjo ──",
+      "",
+      "I built TraderM8 because I was sick of bouncing between five tabs to do",
+      "what should be one workflow. After 500+ hours of paid courses and a lot",
+      "of blown setups, I distilled the parts that actually move the needle into",
+      "a single dashboard. ICT bias, session timing, news that matters, a",
+      "journal that doesn't get in your way — all in one place, beside your",
+      "charts.",
+      "",
+      "You're one of the first 100 inside. That means your feedback shapes what",
+      "gets built next. Hit the Feedback tab in the sidebar (or visit",
+      `${APP_URL}/feedback once you're signed in) and tell me:`,
+      "",
+      "  • What's missing or broken",
+      "  • What you'd build if you could clone yourself",
+      "  • What you'd nuke from the dashboard",
+      "",
+      "I read every single one. Founder tier means you have the loudest voice.",
       "",
       `${remaining} spot${remaining === 1 ? "" : "s"} remaining out of ${FREE_SPOT_CAP}.`,
       "",
+      "Trade with your M8,",
       "— Banjo",
+      "",
+      "PS: Reply to this email any time. It comes straight to my inbox.",
     ].join("\n");
     const html = `
 <!doctype html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0e17;color:#e2e8f0;margin:0;padding:32px;">
-  <div style="max-width:520px;margin:0 auto;background:#111827;border:1px solid #1e293b;border-radius:14px;overflow:hidden;">
-    <div style="padding:28px 32px;border-bottom:1px solid #1e293b;text-align:center;">
-      <div style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">Trader<span style="color:#3b82f6;">M8</span></div>
-      <div style="margin-top:6px;font-size:13px;color:#64748b;">Your mate of the market</div>
+  <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid #1e293b;border-radius:14px;overflow:hidden;">
+    <div style="padding:32px 32px 24px;border-bottom:1px solid #1e293b;text-align:center;">
+      <div style="font-size:28px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">Trader<span style="color:#3b82f6;">M8</span></div>
+      <div style="margin-top:6px;font-size:13px;color:#64748b;letter-spacing:0.02em;">Your mate of the market</div>
     </div>
-    <div style="padding:28px 32px;">
-      <div style="display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:#22c55e;font-weight:700;background:rgba(34,197,94,0.12);padding:4px 10px;border-radius:999px;margin-bottom:16px;">
-        ✓ Spot #${position} of ${FREE_SPOT_CAP} confirmed
+    <div style="padding:32px 32px 8px;">
+      <div style="display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:#22c55e;font-weight:700;background:rgba(34,197,94,0.12);padding:5px 11px;border-radius:999px;margin-bottom:18px;">
+        ✓ You&rsquo;re in &middot; Spot #${position} of ${FREE_SPOT_CAP}
       </div>
-      <div style="font-size:18px;color:#ffffff;font-weight:600;line-height:1.4;margin-bottom:14px;">${greeting}</div>
-      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
-        Welcome to TraderM8. You&rsquo;re locked into the free-for-life founder tier — every feature, free, forever, no card required.
+      <div style="font-size:24px;font-weight:700;color:#ffffff;line-height:1.25;letter-spacing:-0.01em;margin-bottom:16px;">${greeting}</div>
+      <p style="font-size:15px;line-height:1.65;color:#e2e8f0;margin:0 0 14px;">
+        Welcome to TraderM8. You&rsquo;re locked into the <strong style="color:#60a5fa;">free-for-life founder tier</strong> — every feature, every update, free, forever, no card required.
       </p>
-      <p style="font-size:15px;line-height:1.6;color:#94a3b8;margin:0 0 28px;">
+      <p style="font-size:14px;line-height:1.65;color:#94a3b8;margin:0 0 26px;">
         Sign in with the Google account that uses <strong style="color:#e2e8f0;">${escape(email)}</strong> so we can match you to your waitlist spot.
       </p>
-      <div style="text-align:center;margin-bottom:28px;">
-        <a href="${APP_URL}/login" style="display:inline-block;background:#3b82f6;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 28px;border-radius:8px;">
+      <div style="text-align:center;margin-bottom:14px;">
+        <a href="${APP_URL}/login" style="display:inline-block;background:linear-gradient(180deg,#3b82f6,#1d4ed8);color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:16px 36px;border-radius:10px;box-shadow:0 6px 20px rgba(59,130,246,0.35);">
           Sign in to TraderM8 →
         </a>
       </div>
-      <p style="font-size:12px;line-height:1.6;color:#64748b;margin:0 0 0;text-align:center;">
-        ${FREE_SPOT_CAP - position} ${FREE_SPOT_CAP - position === 1 ? "spot" : "spots"} remaining. Something feels off? Just reply to this email.
+      <div style="text-align:center;margin-bottom:26px;">
+        <a href="${APP_URL}" style="font-size:12px;color:#64748b;text-decoration:none;">${APP_URL.replace(/^https?:\/\//, "")}</a>
+      </div>
+    </div>
+
+    <div style="margin:0 32px;padding:24px 24px 22px;border:1px solid #1e293b;border-radius:12px;background:#0f172a;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.18em;color:#3b82f6;font-weight:700;margin-bottom:10px;">A note from Banjo</div>
+      <p style="font-size:14px;line-height:1.7;color:#e2e8f0;margin:0 0 12px;">
+        I built TraderM8 because I was sick of bouncing between five tabs to do what should be one workflow. After 500+ hours of paid courses and a lot of blown setups, I distilled the parts that actually move the needle into a single dashboard.
+      </p>
+      <p style="font-size:14px;line-height:1.7;color:#94a3b8;margin:0;">
+        ICT bias, session timing, news that actually matters, a journal that doesn&rsquo;t get in your way &mdash; all beside your charts.
       </p>
     </div>
-    <div style="padding:18px 32px;border-top:1px solid #1e293b;background:#0f172a;font-size:11px;color:#475569;text-align:center;">
-      You're getting this because you joined the TraderM8 waitlist.
+
+    <div style="margin:18px 32px 8px;padding:24px 24px 22px;border:1px solid #3b82f6;border-radius:12px;background:linear-gradient(180deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.18em;color:#60a5fa;font-weight:700;margin-bottom:10px;">Help shape what gets built</div>
+      <p style="font-size:14px;line-height:1.65;color:#e2e8f0;margin:0 0 14px;">
+        You&rsquo;re one of the first ${FREE_SPOT_CAP} inside &mdash; your feedback genuinely steers the roadmap. Inside the app, hit the <strong style="color:#60a5fa;">Feedback</strong> tab and tell me:
+      </p>
+      <ul style="margin:0 0 14px;padding:0 0 0 20px;font-size:14px;line-height:1.7;color:#cbd5e1;">
+        <li>What&rsquo;s missing or broken</li>
+        <li>What you&rsquo;d build if you could clone yourself</li>
+        <li>What you&rsquo;d nuke from the dashboard</li>
+      </ul>
+      <div style="text-align:center;margin-top:18px;">
+        <a href="${APP_URL}/feedback" style="display:inline-block;border:1px solid #3b82f6;color:#60a5fa;text-decoration:none;font-weight:600;font-size:13px;padding:10px 22px;border-radius:8px;">
+          Leave feedback →
+        </a>
+      </div>
+      <p style="font-size:12px;line-height:1.6;color:#64748b;margin:14px 0 0;text-align:center;">
+        I read every single one. Founder tier means you have the loudest voice.
+      </p>
+    </div>
+
+    <div style="padding:24px 32px 28px;text-align:left;">
+      <p style="font-size:14px;line-height:1.65;color:#94a3b8;margin:0 0 4px;">Trade with your M8,</p>
+      <p style="font-size:15px;font-weight:700;color:#ffffff;margin:0 0 12px;">&mdash; Banjo</p>
+      <p style="font-size:12px;line-height:1.6;color:#64748b;margin:0;">
+        PS: Reply to this email any time &mdash; it comes straight to my inbox.<br>
+        ${remaining} ${remaining === 1 ? "spot" : "spots"} remaining out of ${FREE_SPOT_CAP}.
+      </p>
+    </div>
+
+    <div style="padding:18px 32px;border-top:1px solid #1e293b;background:#0a0e17;font-size:11px;color:#475569;text-align:center;">
+      You&rsquo;re getting this because you joined the TraderM8 waitlist at <a href="${APP_URL}" style="color:#64748b;text-decoration:none;">traderm8.com</a>.
     </div>
   </div>
 </body></html>`.trim();
@@ -229,34 +291,60 @@ export async function sendApplicantWelcome(input: {
     const text = [
       greeting,
       "",
-      `Thanks for joining the TraderM8 waitlist. Right now we're at capacity — you're #${position} in line.`,
+      `Thanks for joining the TraderM8 waitlist. Right now we're at capacity — the first ${FREE_SPOT_CAP} traders have locked in the free-for-life founder tier and you're #${position} in line.`,
       "",
-      "We'll email you the moment a spot opens up. Nothing else you need to do for now.",
+      "We'll email you the moment a spot opens up — with your sign-in link and everything you need. Nothing else you need to do for now.",
+      "",
+      "── A note from Banjo ──",
+      "",
+      "I'm Banjo, the trader who built TraderM8. I'm capping the founder tier",
+      "at 100 because I want to actually read every piece of feedback that",
+      "comes back from week one and act on it. The moment one of those 100",
+      "frees up, you're in.",
+      "",
+      "In the meantime — keep an eye on your inbox. If you've got a question",
+      "or just want to say hi, reply to this email. It hits me directly.",
       "",
       "— Banjo",
     ].join("\n");
     const html = `
 <!doctype html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0e17;color:#e2e8f0;margin:0;padding:32px;">
-  <div style="max-width:520px;margin:0 auto;background:#111827;border:1px solid #1e293b;border-radius:14px;overflow:hidden;">
-    <div style="padding:28px 32px;border-bottom:1px solid #1e293b;text-align:center;">
-      <div style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">Trader<span style="color:#3b82f6;">M8</span></div>
-      <div style="margin-top:6px;font-size:13px;color:#64748b;">Your mate of the market</div>
+  <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid #1e293b;border-radius:14px;overflow:hidden;">
+    <div style="padding:32px 32px 24px;border-bottom:1px solid #1e293b;text-align:center;">
+      <div style="font-size:28px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">Trader<span style="color:#3b82f6;">M8</span></div>
+      <div style="margin-top:6px;font-size:13px;color:#64748b;letter-spacing:0.02em;">Your mate of the market</div>
     </div>
-    <div style="padding:28px 32px;">
-      <div style="display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:#f59e0b;font-weight:700;background:rgba(245,158,11,0.12);padding:4px 10px;border-radius:999px;margin-bottom:16px;">
-        Waitlist · Position #${position}
+    <div style="padding:32px 32px 8px;">
+      <div style="display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:#f59e0b;font-weight:700;background:rgba(245,158,11,0.12);padding:5px 11px;border-radius:999px;margin-bottom:18px;">
+        Waitlist &middot; Position #${position}
       </div>
-      <div style="font-size:18px;color:#ffffff;font-weight:600;line-height:1.4;margin-bottom:14px;">${greeting}</div>
-      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
-        Thanks for joining the TraderM8 waitlist. Right now we&rsquo;re at capacity — the first ${FREE_SPOT_CAP} traders have locked in the free-for-life founder tier.
+      <div style="font-size:24px;font-weight:700;color:#ffffff;line-height:1.25;letter-spacing:-0.01em;margin-bottom:16px;">${greeting}</div>
+      <p style="font-size:15px;line-height:1.65;color:#e2e8f0;margin:0 0 14px;">
+        Thanks for joining the TraderM8 waitlist. Right now we&rsquo;re at capacity &mdash; the first ${FREE_SPOT_CAP} traders have locked in the free-for-life founder tier.
       </p>
-      <p style="font-size:15px;line-height:1.6;color:#94a3b8;margin:0 0 16px;">
-        You&rsquo;re <strong style="color:#e2e8f0;">#${position}</strong> in line. We&rsquo;ll email you the moment a spot opens up. Nothing else you need to do for now.
+      <p style="font-size:14px;line-height:1.65;color:#94a3b8;margin:0 0 22px;">
+        You&rsquo;re <strong style="color:#e2e8f0;">#${position}</strong> in line. The moment a spot opens, you&rsquo;ll get an email with your sign-in link &mdash; nothing else you need to do for now.
       </p>
     </div>
-    <div style="padding:18px 32px;border-top:1px solid #1e293b;background:#0f172a;font-size:11px;color:#475569;text-align:center;">
-      You're getting this because you joined the TraderM8 waitlist.
+
+    <div style="margin:0 32px;padding:24px 24px 22px;border:1px solid #1e293b;border-radius:12px;background:#0f172a;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.18em;color:#3b82f6;font-weight:700;margin-bottom:10px;">A note from Banjo</div>
+      <p style="font-size:14px;line-height:1.7;color:#e2e8f0;margin:0 0 12px;">
+        I&rsquo;m Banjo, the trader who built TraderM8. I&rsquo;m capping the founder tier at ${FREE_SPOT_CAP} because I want to actually read every piece of feedback from week one and act on it &mdash; the moment one of those spots frees up, you&rsquo;re in.
+      </p>
+      <p style="font-size:14px;line-height:1.7;color:#94a3b8;margin:0;">
+        Got a question or just want to say hi? Reply to this email &mdash; it hits me directly.
+      </p>
+    </div>
+
+    <div style="padding:24px 32px 28px;text-align:left;">
+      <p style="font-size:14px;line-height:1.65;color:#94a3b8;margin:0 0 4px;">Talk soon,</p>
+      <p style="font-size:15px;font-weight:700;color:#ffffff;margin:0;">&mdash; Banjo</p>
+    </div>
+
+    <div style="padding:18px 32px;border-top:1px solid #1e293b;background:#0a0e17;font-size:11px;color:#475569;text-align:center;">
+      You&rsquo;re getting this because you joined the TraderM8 waitlist at <a href="${APP_URL}" style="color:#64748b;text-decoration:none;">traderm8.com</a>.
     </div>
   </div>
 </body></html>`.trim();
