@@ -1,26 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { emitTimezoneChange } from "@/lib/useTimezone";
-
-const TZ_OPTIONS = [
-  { val: "America/New_York", label: "New York (ET)" },
-  { val: "America/Chicago", label: "Chicago (CT)" },
-  { val: "America/Denver", label: "Denver (MT)" },
-  { val: "America/Los_Angeles", label: "Los Angeles (PT)" },
-  { val: "Europe/London", label: "London (GMT/BST)" },
-  { val: "Europe/Paris", label: "Paris (CET)" },
-  { val: "Europe/Moscow", label: "Moscow (MSK)" },
-  { val: "Asia/Dubai", label: "Dubai (GST)" },
-  { val: "Asia/Kolkata", label: "Mumbai (IST)" },
-  { val: "Asia/Singapore", label: "Singapore (SGT)" },
-  { val: "Asia/Shanghai", label: "Shanghai (CST)" },
-  { val: "Asia/Tokyo", label: "Tokyo (JST)" },
-  { val: "Australia/Perth", label: "Perth (AWST)" },
-  { val: "Australia/Sydney", label: "Sydney (AEST)" },
-  { val: "Australia/Brisbane", label: "Brisbane (AEST)" },
-  { val: "Pacific/Auckland", label: "Auckland (NZST)" },
-];
+import { useState, useEffect, useMemo } from "react";
 
 const MARKET_CLOCKS = [
   { id: "ny", label: "New York", tz: "America/New_York", abbr: "ET" },
@@ -64,12 +44,14 @@ function getSessionStatus(startSec: number, endSec: number, overnight: boolean, 
 }
 
 export default function MarketClocks() {
-  const [userTZ, setUserTZ] = useState("");
+  // "Your Time" is purely informational — always shows the user's actual
+  // local timezone (auto-detected). The app-wide display timezone (used
+  // by the calendar, countdown, etc.) lives on the Settings page.
+  const [localTZ, setLocalTZ] = useState("");
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    const stored = localStorage.getItem("banjoTZ");
-    setUserTZ(stored || Intl.DateTimeFormat().resolvedOptions().timeZone);
+    setLocalTZ(Intl.DateTimeFormat().resolvedOptions().timeZone);
   }, []);
 
   useEffect(() => {
@@ -77,24 +59,28 @@ export default function MarketClocks() {
     return () => clearInterval(id);
   }, []);
 
-  const handleTZChange = useCallback((tz: string) => {
-    setUserTZ(tz);
-    localStorage.setItem("banjoTZ", tz);
-    emitTimezoneChange();
-  }, []);
-
-  const tzOptions = useMemo(() => {
-    if (!userTZ) return TZ_OPTIONS;
-    const known = TZ_OPTIONS.some((o) => o.val === userTZ);
-    if (known) return TZ_OPTIONS;
-    return [{ val: userTZ, label: `Auto: ${userTZ.split("/").pop()}` }, ...TZ_OPTIONS];
-  }, [userTZ]);
+  const localLabel = useMemo(() => {
+    if (!localTZ) return "";
+    // Pretty form: "Brisbane (AEST)" — short city + abbreviation.
+    const city = localTZ.split("/").pop()?.replace(/_/g, " ") ?? localTZ;
+    try {
+      const abbr = new Intl.DateTimeFormat("en-US", {
+        timeZone: localTZ,
+        timeZoneName: "short",
+      })
+        .formatToParts(now)
+        .find((p) => p.type === "timeZoneName")?.value;
+      return abbr ? `${city} · ${abbr}` : city;
+    } catch {
+      return city;
+    }
+  }, [localTZ, now]);
 
   const etNow = useMemo(() => {
     return new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
   }, [now]);
 
-  if (!userTZ) return null;
+  if (!localTZ) return null;
 
   return (
     <div className="space-y-3">
@@ -104,17 +90,11 @@ export default function MarketClocks() {
         <div className="bg-[#111827] border border-[#1e293b] rounded-xl px-5 py-4 min-w-[180px] flex flex-col">
           <div className="text-[10px] font-bold text-[#3b82f6] uppercase tracking-widest mb-2">Your Time</div>
           <div className="text-2xl font-black text-white tabular-nums tracking-tight leading-none">
-            {fmtTime(now, userTZ)}
+            {fmtTime(now, localTZ)}
           </div>
-          <select
-            value={userTZ}
-            onChange={(e) => handleTZChange(e.target.value)}
-            className="mt-3 bg-[#0f172a] border border-[#1e293b] text-[#94a3b8] rounded-lg px-2.5 py-1.5 text-[11px] cursor-pointer focus:outline-none focus:border-[#3b82f6] transition-colors"
-          >
-            {tzOptions.map((o) => (
-              <option key={o.val} value={o.val}>{o.label}</option>
-            ))}
-          </select>
+          <div className="mt-3 text-[10px] text-[#64748b] font-semibold tracking-wide">
+            {localLabel}
+          </div>
         </div>
 
         {/* Market clocks */}
