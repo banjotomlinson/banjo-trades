@@ -1,9 +1,9 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import {
-  sendApplicantWelcome,
-  sendWaitlistNotification,
-} from "@/lib/email/waitlist";
+import { sendWaitlistNotification } from "@/lib/email/waitlist";
+import { sendInviteEmail } from "@/lib/email/invite";
+
+const SPOT_CAP = 100;
 
 // Server-only client with the service role key so anon visitors can sign up
 // even if their browser session is null. RLS still owns who reads.
@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
         .from("waitlist_signups")
         .select("*", { count: "exact", head: true });
       const total = count ?? 0;
+      const inCap = total <= SPOT_CAP;
       const results = await Promise.allSettled([
         sendWaitlistNotification({
           name: cleanName,
@@ -97,11 +98,9 @@ export async function POST(req: NextRequest) {
           painPoint: cleanPainPoint,
           totalCount: total,
         }),
-        sendApplicantWelcome({
-          name: cleanName,
-          email,
-          position: total,
-        }),
+        inCap
+          ? sendInviteEmail({ name: cleanName, email })
+          : Promise.resolve(),
       ]);
       results.forEach((r, i) => {
         if (r.status === "rejected") {
