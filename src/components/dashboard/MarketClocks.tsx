@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { emitTimezoneChange } from "@/lib/useTimezone";
 
 const TZ_OPTIONS = [
   { val: "America/New_York", label: "New York (ET)" },
@@ -79,6 +80,7 @@ export default function MarketClocks() {
   const handleTZChange = useCallback((tz: string) => {
     setUserTZ(tz);
     localStorage.setItem("banjoTZ", tz);
+    emitTimezoneChange();
   }, []);
 
   const tzOptions = useMemo(() => {

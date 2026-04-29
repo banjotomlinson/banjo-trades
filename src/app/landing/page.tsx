@@ -10,6 +10,8 @@ import {
 } from "./_components";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 
+const COACHING_HREF = "/landing/coaching";
+
 export default function LandingPage() {
   return (
     <main className="min-h-screen overflow-x-clip">
@@ -21,6 +23,7 @@ export default function LandingPage() {
       <Reviews />
       <FounderNote />
       <FAQ />
+      <CoachingCta />
       <Waitlist />
       <Footer />
     </main>
@@ -343,25 +346,23 @@ function FounderNote() {
             Meet the founder
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
-            Built by a trader, for traders.
+            Built by a trader who&apos;s done the reps.
           </h2>
           <p className="mt-5 text-base text-[#94a3b8] leading-relaxed">
-            <strong className="text-white">Banjo Tomlinson</strong>
-            {" "}designed and shipped TraderM8 from scratch, day-by-day in
-            public. Every panel on
-            this dashboard exists because of a personal frustration with the
-            tools already out there — fourteen tabs at NY open, journals that
-            lied, sizing math done in his head between candles. He&apos;s an
-            ICT/SMC trader, prop firm survivor, and serial tab-juggler turned
-            founder.
+            <strong className="text-white">Banjo Tomlinson</strong>{" "}
+            has spent years inside the charts and hundreds of hours inside the
+            courses — ICT, SMC, the prop-firm playbooks, the volume-profile
+            crowd, the algo guys. He built TraderM8 because none of the
+            tools out there did the job he needed: clean bias, real session
+            levels, sizing in three inputs, a journal that actually tells the
+            truth.
           </p>
           <p className="mt-4 text-base text-[#e2e8f0] leading-relaxed border-l-2 border-[#3b82f6]/40 pl-5 italic">
-            &ldquo;I&apos;d rather have a clean dashboard, a journal that
-            doesn&apos;t lie to me, and a calculator that just works — than
-            another paid Discord telling me to buy. TraderM8 is what I wanted
-            before I built it. If you&apos;re an ICT/SMC trader who&apos;s
-            tired of opening fourteen tabs every morning, you&apos;ll feel right
-            at home.&rdquo;
+            &ldquo;I&apos;ve sat through every course you&apos;re thinking of
+            buying. I know what works, what&apos;s recycled, and what&apos;s
+            outright noise. TraderM8 is the toolkit I wish I&apos;d had on day
+            one — and the conversations I have with traders are how I pass on
+            everything those courses charge thousands for.&rdquo;
           </p>
           <div className="mt-7 flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-3">
@@ -589,6 +590,93 @@ function Field({
       </div>
       {children}
     </label>
+  );
+}
+
+// ── Coaching CTA banner — darker, bolder push between FAQ and waitlist ─
+function CoachingCta() {
+  return (
+    <section
+      id="coaching-cta"
+      className="relative z-10 px-5 sm:px-8 py-20 border-t border-white/5"
+    >
+      <div className="relative max-w-6xl mx-auto overflow-hidden rounded-3xl border border-[#3b82f6]/30 bg-[#02040a]">
+        {/* glow + grid backdrop so it reads bolder than the rest of the page */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0)",
+            backgroundSize: "22px 22px",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.22),transparent_60%)]"
+        />
+
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_auto] items-center gap-10 px-6 sm:px-10 py-14 sm:py-16">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#3b82f6]/30 bg-[#3b82f6]/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] font-bold text-[#60a5fa] mb-5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] animate-pulse" />
+              1-on-1 with Banjo
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-tight leading-[1.05]">
+              Want to talk it through?
+              <br />
+              <span className="bg-gradient-to-br from-[#60a5fa] via-[#3b82f6] to-[#1d4ed8] bg-clip-text text-transparent">
+                Book a 30-minute chat.
+              </span>
+            </h2>
+            <p className="mt-5 max-w-xl text-base sm:text-lg text-[#94a3b8] leading-relaxed">
+              Tips, insights, and the parts of every paid course that actually
+              matter — distilled into a 30-minute call. Not a sales pitch, not
+              a Discord plug. Your first session is free.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row items-center sm:items-start gap-3">
+              <Link
+                href={COACHING_HREF}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold px-6 py-3 rounded-md shadow-lg shadow-[#3b82f6]/30 transition-all hover:shadow-[#3b82f6]/50"
+              >
+                See how it works
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                href={`${COACHING_HREF}#book`}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/10 hover:border-white/30 text-white text-sm font-semibold px-6 py-3 rounded-md transition-colors"
+              >
+                Pick a time
+              </Link>
+            </div>
+            <p className="mt-4 text-[11px] text-[#475569]">
+              Free first 30 minutes for every TraderM8 account · Mon–Sun, 9am–7pm
+            </p>
+          </div>
+
+          {/* Right-side stat block — visible on desktop only */}
+          <div className="hidden lg:block">
+            <div className="rounded-2xl border border-white/10 bg-[#0a0e17] px-7 py-6 text-center min-w-[220px]">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#3b82f6]">
+                Hours studied
+              </div>
+              <div className="mt-2 text-5xl font-bold text-white tracking-tight">
+                500+
+              </div>
+              <div className="mt-1 text-xs text-[#64748b]">
+                of paid courses, sorted
+              </div>
+              <div className="mt-5 pt-5 border-t border-white/10">
+                <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#3b82f6]">
+                  First session
+                </div>
+                <div className="mt-2 text-3xl font-bold text-white">Free</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

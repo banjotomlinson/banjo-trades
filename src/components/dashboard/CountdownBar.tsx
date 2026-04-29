@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useCalendarFilter } from "@/components/providers/CalendarFilterProvider";
+import { useTimezone } from "@/lib/useTimezone";
 
 interface CalendarEvent {
   title: string;
@@ -27,17 +28,18 @@ function formatCountdown(diff: number): string {
   return `${m}m ${String(s).padStart(2, "0")}s`;
 }
 
-function formatEventTime(date: Date): string {
-  return (
-    date.toLocaleString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "America/New_York",
-    }) + " ET"
-  );
+function formatEventTime(date: Date, tz: string): string {
+  // Render in the user's chosen zone with the auto-resolved abbreviation
+  // (PT, ET, AEST, BST, etc.) so it's always self-describing.
+  return date.toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: tz,
+    timeZoneName: "short",
+  });
 }
 
 export default function CountdownBar({
@@ -45,6 +47,7 @@ export default function CountdownBar({
   apiEndpoint = "/api/calendar",
 }: CountdownBarProps) {
   const { matches, selection } = useCalendarFilter();
+  const tz = useTimezone();
   const filterLabel =
     selection === "all"
       ? "All currencies"
@@ -109,7 +112,7 @@ export default function CountdownBar({
 
     const next = upcoming[0];
     setEventName(next.title);
-    setEventTime(formatEventTime(next.date));
+    setEventTime(formatEventTime(next.date, tz));
 
     const diff = next.date.getTime() - Date.now();
     if (diff <= 0) {
@@ -121,7 +124,7 @@ export default function CountdownBar({
     setCountdown(formatCountdown(diff));
     setIsImminent(diff < 300000); // 5 minutes
     rafRef.current = requestAnimationFrame(tick);
-  }, [events, matches]);
+  }, [events, matches, tz]);
 
   useEffect(() => {
     tick();

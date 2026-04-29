@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/data";
 import { biasForEvent, summarizeDay, type Bias } from "@/lib/eventBias";
 import { useCalendarFilter } from "@/components/providers/CalendarFilterProvider";
+import { useTimezone } from "@/lib/useTimezone";
 
 function ymd(d: Date): string {
   const y = d.getFullYear();
@@ -94,6 +95,8 @@ export default function EconomicCalendar({
     toggleCurrency,
     matches: matchesCategory,
   } = useCalendarFilter();
+
+  const tz = useTimezone();
 
   // When the parent embeds this calendar with a fixed category, seed the
   // provider on first mount so the user arrives pre-filtered (but is then
@@ -371,6 +374,7 @@ export default function EconomicCalendar({
           monthStart={rangeStart}
           events={filtered}
           loading={loading || pendingKey !== null}
+          timezone={tz}
         />
       ) : (
         <div className="max-h-[400px] overflow-y-auto">
@@ -414,6 +418,7 @@ export default function EconomicCalendar({
                         hour: "2-digit",
                         minute: "2-digit",
                         hour12: true,
+                        timeZone: tz,
                       })}
                     </td>
                     <td className="px-3 py-3 font-medium">{event.title}</td>
@@ -467,10 +472,12 @@ function MonthGrid({
   monthStart,
   events,
   loading,
+  timezone,
 }: {
   monthStart: Date;
   events: CalendarEvent[];
   loading: boolean;
+  timezone: string;
 }) {
   // 42-cell grid beginning on the Sunday on/before the 1st.
   const gridStart = new Date(monthStart);
@@ -639,6 +646,7 @@ function MonthGrid({
                                   hour: "2-digit",
                                   minute: "2-digit",
                                   hour12: true,
+                                  timeZone: timezone,
                                 })}
                               </span>
                               <span className="text-muted">{e.country}</span>
