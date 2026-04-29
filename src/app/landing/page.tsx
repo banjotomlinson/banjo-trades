@@ -135,6 +135,7 @@ function Hero() {
               </span>
               <br className="hidden sm:block" />
               <span className="sm:inline"> beside you.</span>
+              <span className="sm:inline"> 1 2 3</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-[#94a3b8] leading-relaxed">
               TraderM8 is the trading dashboard built for the way you actually
