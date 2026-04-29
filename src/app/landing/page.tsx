@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BgEffects,
   Footer,
@@ -21,7 +21,7 @@ export default function LandingPage() {
       <LogoStrip />
       <FeatureGrid />
       <Reviews />
-      <FounderNote />
+      <FounderNote onBook={() => setBookingOpen(true)} />
       <FAQ />
       <CoachingCta onBook={() => setBookingOpen(true)} />
       <Waitlist />
@@ -405,7 +405,7 @@ function ReviewCard({
 }
 
 // ── Founder note — bigger, two-column ─────────────────────────────
-function FounderNote() {
+function FounderNote({ onBook }: { onBook: () => void }) {
   return (
     <section id="about" className="relative z-10 px-5 sm:px-8 py-24 border-t border-white/5">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,400px)_1fr] gap-10 lg:gap-16 items-center">
@@ -451,7 +451,29 @@ function FounderNote() {
             one — and the conversations I have with traders are how I pass on
             everything those courses charge thousands for.&rdquo;
           </p>
-          <div className="mt-7 flex items-center gap-4 flex-wrap">
+          <div className="mt-7 rounded-xl border border-[#3b82f6]/20 bg-[#3b82f6]/[0.06] p-5">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-[#3b82f6]/15 border border-[#3b82f6]/25 flex items-center justify-center text-[#60a5fa] text-lg">
+                💬
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-white">1-on-1 Chat with Banjo</h3>
+                <p className="mt-1 text-sm text-[#94a3b8] leading-relaxed">
+                  30 minutes, no sales pitch. Tell Banjo where you&apos;re stuck, what courses you&apos;re considering, or what&apos;s not clicking. First session is free for every TraderM8 account.
+                </p>
+                <button
+                  type="button"
+                  onClick={onBook}
+                  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#3b82f6] hover:text-[#60a5fa] transition-colors"
+                >
+                  Book your free session
+                  <span aria-hidden>&rarr;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[#3b82f6] flex items-center justify-center text-white font-bold">
                 B
@@ -484,12 +506,96 @@ function FounderNote() {
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
               </svg>
               Instagram
-              <span aria-hidden>→</span>
+              <span aria-hidden>&rarr;</span>
             </a>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+// ── Custom dropdown ───────────────────────────────────────────────
+function CustomSelect({
+  label,
+  value,
+  onChange,
+  placeholder,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  options: { value: string; label: string }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div className="block">
+      <div className="flex items-baseline justify-between mb-2">
+        <span className="text-[11px] uppercase tracking-wider font-bold text-[#94a3b8]">
+          {label}
+        </span>
+        <span className="text-[10px] text-[#3b82f6]">required</span>
+      </div>
+      <div ref={ref} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className={`w-full flex items-center justify-between bg-[#0a0e17] border rounded-lg px-4 py-3 text-sm text-left transition-colors ${
+            open
+              ? "border-[#3b82f6] ring-1 ring-[#3b82f6]/30"
+              : "border-white/10 hover:border-white/20"
+          }`}
+        >
+          <span className={selected ? "text-white" : "text-[#475569]"}>
+            {selected ? selected.label : placeholder}
+          </span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            className={`text-[#64748b] transition-transform ${open ? "rotate-180" : ""}`}
+          >
+            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        {open && (
+          <div className="absolute z-50 mt-1.5 w-full rounded-xl border border-white/10 bg-[#0a0e17] shadow-2xl shadow-black/50 overflow-hidden">
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 text-sm transition-colors ${
+                  opt.value === value
+                    ? "bg-[#3b82f6]/15 text-[#60a5fa]"
+                    : "text-[#e2e8f0] hover:bg-white/[0.05]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -506,6 +612,16 @@ function Waitlist() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!primaryAsset) {
+      setStatus("err");
+      setErrorMsg("Select what you mainly trade");
+      return;
+    }
+    if (!experience) {
+      setStatus("err");
+      setErrorMsg("Select your trading experience");
+      return;
+    }
     setStatus("submitting");
     setErrorMsg("");
     try {
@@ -531,7 +647,7 @@ function Waitlist() {
       setStatus("ok");
     } catch {
       setStatus("err");
-      setErrorMsg("Network error — try again in a moment.");
+      setErrorMsg("Network error. Try again in a moment.");
     }
   }
 
@@ -539,13 +655,15 @@ function Waitlist() {
     return (
       <section id="waitlist" className="relative z-10 px-5 sm:px-8 py-24">
         <div className="max-w-md mx-auto text-center rounded-2xl border border-[#22c55e]/30 bg-[#22c55e]/[0.06] p-10">
-          <div className="text-4xl mb-3">🎉</div>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#22c55e]/15 border border-[#22c55e]/30 mb-4">
+            <span className="text-2xl text-[#22c55e]">&#10003;</span>
+          </div>
           <h2 className="text-2xl font-bold text-white mb-2">
             {alreadyJoined ? "You're already on the list." : "You're on the list."}
           </h2>
           <p className="text-sm text-[#94a3b8]">
             {alreadyJoined
-              ? "Sit tight — we'll email when your spot opens up."
+              ? "Sit tight. We'll email when your spot opens up."
               : "We'll send you an invite when the closed beta opens. Keep an eye on your inbox."}
           </p>
         </div>
@@ -555,77 +673,75 @@ function Waitlist() {
 
   return (
     <section id="waitlist" className="relative z-10 px-5 sm:px-8 py-24 border-t border-white/5">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-xl mx-auto">
         <SectionHeader
           eyebrow="Closed beta"
           title="Get early access."
-          subtitle="The first 100 traders to join lock in free-for-life access. Everyone else lands on a paid plan when the public launch goes live — so move fast."
+          subtitle="The first 100 traders to join lock in free-for-life access. Everyone else lands on a paid plan when the public launch goes live."
         />
         <form
           onSubmit={submit}
           className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-6 sm:p-8 space-y-5"
         >
-          <Field label="Name" required>
-            <input
-              type="text"
-              required
-              autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="First and last name"
-              minLength={2}
-              maxLength={120}
-              className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
-            />
-          </Field>
-
-          <Field label="Email" required>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@trader.com"
-              className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
-            />
-          </Field>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="What do you mainly trade?" required>
-              <select
+            <Field label="Name" required>
+              <input
+                type="text"
                 required
-                value={primaryAsset}
-                onChange={(e) => setPrimaryAsset(e.target.value)}
-                className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3b82f6] transition-colors"
-              >
-                <option value="" disabled>— choose one —</option>
-                <option value="futures">Index futures (NQ, ES, etc.)</option>
-                <option value="forex">Forex</option>
-                <option value="crypto">Crypto</option>
-                <option value="commodities">Commodities (Gold, Oil, etc.)</option>
-                <option value="stocks">Stocks / Indices</option>
-                <option value="all">A bit of everything</option>
-              </select>
+                autoComplete="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="First and last name"
+                minLength={2}
+                maxLength={120}
+                className="w-full bg-[#0a0e17] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 transition-colors"
+              />
             </Field>
 
-            <Field label="How long have you been trading?" required>
-              <select
+            <Field label="Email" required>
+              <input
+                type="email"
                 required
-                value={experience}
-                onChange={(e) => setExperience(e.target.value)}
-                className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3b82f6] transition-colors"
-              >
-                <option value="" disabled>— choose one —</option>
-                <option value="<1y">Less than a year</option>
-                <option value="1-3y">1–3 years</option>
-                <option value="3-5y">3–5 years</option>
-                <option value="5+y">5+ years</option>
-              </select>
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@trader.com"
+                className="w-full bg-[#0a0e17] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 transition-colors"
+              />
             </Field>
           </div>
 
-          <Field label="What's your biggest pain point right now?" required>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CustomSelect
+              label="What do you mainly trade?"
+              value={primaryAsset}
+              onChange={setPrimaryAsset}
+              placeholder="Choose one"
+              options={[
+                { value: "futures", label: "Index futures (NQ, ES, etc.)" },
+                { value: "forex", label: "Forex" },
+                { value: "crypto", label: "Crypto" },
+                { value: "commodities", label: "Commodities (Gold, Oil, etc.)" },
+                { value: "stocks", label: "Stocks / Indices" },
+                { value: "all", label: "A bit of everything" },
+              ]}
+            />
+
+            <CustomSelect
+              label="How long have you been trading?"
+              value={experience}
+              onChange={setExperience}
+              placeholder="Choose one"
+              options={[
+                { value: "<1y", label: "Less than a year" },
+                { value: "1-3y", label: "1-3 years" },
+                { value: "3-5y", label: "3-5 years" },
+                { value: "5+y", label: "5+ years" },
+              ]}
+            />
+          </div>
+
+          <Field label="Biggest pain point right now?" required>
             <textarea
               required
               value={painPoint}
@@ -634,21 +750,27 @@ function Waitlist() {
               placeholder="e.g. juggling tabs, journaling consistency, missing news, sizing mistakes..."
               minLength={3}
               maxLength={1000}
-              className="w-full bg-[#0a0e17] border border-white/10 rounded-md px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] resize-y transition-colors"
+              className="w-full bg-[#0a0e17] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 resize-y transition-colors"
             />
           </Field>
 
           {status === "err" && (
-            <div className="text-sm text-[#ef4444]">{errorMsg}</div>
+            <div className="rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/20 px-4 py-3 text-sm text-[#ef4444]">
+              {errorMsg}
+            </div>
           )}
 
           <button
             type="submit"
             disabled={status === "submitting"}
-            className="w-full inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-50 text-white text-sm font-semibold px-6 py-3 rounded-md shadow-lg shadow-[#3b82f6]/25 transition-all hover:shadow-[#3b82f6]/40"
+            className="w-full inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-50 text-white text-sm font-semibold px-6 py-3.5 rounded-lg shadow-lg shadow-[#3b82f6]/25 transition-all hover:shadow-[#3b82f6]/40"
           >
             {status === "submitting" ? "Submitting..." : "Reserve my spot"}
           </button>
+
+          <p className="text-center text-[11px] text-[#475569]">
+            Free for life for the first 100. No card required.
+          </p>
         </form>
       </div>
     </section>

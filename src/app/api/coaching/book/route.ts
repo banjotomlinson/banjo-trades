@@ -1,21 +1,26 @@
 import { after, NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import {
   sendCoachingAdminNotification,
   sendCoachingBookerConfirmation,
 } from "@/lib/email/coaching";
 
+function admin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 interface Payload {
   name?: string;
   email?: string;
   starts_at?: string;
-  topic?: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Booking is a 30-minute slot starting between 9:00 and 18:30 London time.
-// Anything outside that window is rejected so the form can't smuggle in
-// a 4am call by hand-crafting the payload.
 const SLOT_MINUTES = 30;
 const DAY_START_HOUR = 9;
 const DAY_END_HOUR = 19;
@@ -23,7 +28,6 @@ const DAY_END_HOUR = 19;
 function isValidSlot(d: Date): boolean {
   if (Number.isNaN(d.getTime())) return false;
   if (d.getTime() < Date.now()) return false;
-  // London local hour/minute breakdown.
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/London",
     hour: "2-digit",
@@ -49,11 +53,10 @@ export async function POST(req: NextRequest) {
 
   const name = (body.name ?? "").trim().slice(0, 200);
   const email = (body.email ?? "").trim().toLowerCase();
-  const topic = body.topic?.trim().slice(0, 1000) || null;
   const startsAt = body.starts_at ? new Date(body.starts_at) : null;
 
   if (!name) {
-    return NextResponse.json({ error: "Tell us your name" }, { status: 400 });
+    return NextResponse.json({ error: "Enter your name" }, { status: 400 });
   }
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "Enter a valid email" }, { status: 400 });
@@ -65,13 +68,85 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Email pipeline runs after the response so the user gets immediate
-  // confirmation. `after` keeps the serverless function alive on Vercel
-  // until the Resend POSTs finish — same pattern as the waitlist route.
+  const supa = admin();
+  if (!supa) {
+    return NextResponse.json(
+      { error: "Server not configured" },
+      { status: 500 }
+    );
+  }
+
+  // Check for double-booking
+  const { data: existing } = await supa
+    .from("coaching_sessions")
+    .select("id")
+    .eq("starts_at", startsAt.toISOString())
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    return NextResponse.json(
+      { error: "That slot is already booked. Pick another time." },
+      { status: 409 }
+    );
+  }
+
+  // Create or find the user account via Supabase Auth
+  let userId: string | null = null;
+
+  const { data: existingUsers } = await supa.auth.admin.listUsers();
+  const existingUser = existingUsers?.users?.find(
+    (u) => u.email?.toLowerCase() === email
+  );
+
+  if (existingUser) {
+    userId = existingUser.id;
+    if (name && existingUser.user_metadata?.full_name !== name) {
+      await supa.auth.admin.updateUserById(existingUser.id, {
+        user_metadata: { full_name: name },
+      });
+    }
+  } else {
+    const tempPassword = crypto.randomUUID();
+    const { data: newUser, error: signupErr } = await supa.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: { full_name: name },
+    });
+    if (signupErr) {
+      return NextResponse.json(
+        { error: "Could not create your account. Try again." },
+        { status: 500 }
+      );
+    }
+    userId = newUser.user?.id ?? null;
+  }
+
+  // Insert the coaching session
+  const { error: insertErr } = await supa.from("coaching_sessions").insert({
+    user_id: userId,
+    email,
+    name,
+    starts_at: startsAt.toISOString(),
+  });
+
+  if (insertErr) {
+    if (insertErr.code === "23505") {
+      return NextResponse.json(
+        { error: "That slot is already booked. Pick another time." },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json(
+      { error: "Could not save the booking. Try again." },
+      { status: 500 }
+    );
+  }
+
   after(async () => {
     const results = await Promise.allSettled([
-      sendCoachingAdminNotification({ name, email, startsAt, topic }),
-      sendCoachingBookerConfirmation({ name, email, startsAt, topic }),
+      sendCoachingAdminNotification({ name, email, startsAt, topic: null }),
+      sendCoachingBookerConfirmation({ name, email, startsAt, topic: null }),
     ]);
     results.forEach((r, i) => {
       if (r.status === "rejected") {

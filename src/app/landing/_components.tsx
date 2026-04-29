@@ -59,14 +59,17 @@ export function Nav() {
             <Logo />
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-[#94a3b8]">
-            <Link href="/landing#reviews" className="hover:text-white transition-colors">
-              Reviews
-            </Link>
             <Link href="/landing/features" className="hover:text-white transition-colors">
               Features
             </Link>
+            <Link href="/landing#reviews" className="hover:text-white transition-colors">
+              Reviews
+            </Link>
             <Link href="/landing#faq" className="hover:text-white transition-colors">
               FAQs
+            </Link>
+            <Link href="/landing#about" className="hover:text-white transition-colors">
+              About Me
             </Link>
           </div>
           {/* Desktop CTA */}
@@ -99,76 +102,92 @@ export function Nav() {
 
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const items = [
-    { href: "/landing#reviews", label: "Reviews" },
     { href: "/landing/features", label: "Features" },
+    { href: "/landing#reviews", label: "Reviews" },
     { href: "/landing#faq", label: "FAQs" },
+    { href: "/landing#about", label: "About Me" },
   ];
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
-          key="mobile-menu"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
-          className="md:hidden fixed inset-0 z-[60] bg-[#05070d]"
-          role="dialog"
-          aria-modal="true"
-        >
-          {/* Top bar inside the menu — logo + close */}
-          <div className="px-5 h-16 flex items-center justify-between border-b border-white/5">
-            <Logo />
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center justify-center w-10 h-10 rounded-md text-white hover:bg-white/5 transition-colors"
-              aria-label="Close menu"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-                <line x1="6" y1="6" x2="18" y2="18" />
-                <line x1="6" y1="18" x2="18" y2="6" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Big nav links — staggered fade/slide in */}
-          <nav className="flex-1 flex flex-col items-center justify-center gap-7 px-6 py-10 h-[calc(100vh-4rem-7rem)]">
-            {items.map((item, i) => (
-              <motion.div
-                key={item.href}
-                initial={{ y: 16, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.08 + i * 0.05, duration: 0.22 }}
-              >
-                <Link
-                  href={item.href}
-                  onClick={onClose}
-                  className="text-3xl font-semibold tracking-tight text-white hover:text-[#3b82f6] transition-colors"
-                >
-                  {item.label}
-                </Link>
-              </motion.div>
-            ))}
-          </nav>
-
-          {/* CTA pinned to the bottom */}
+        <>
           <motion.div
-            initial={{ y: 24, opacity: 0 }}
+            key="mobile-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="md:hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            key="mobile-menu"
+            initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.22, duration: 0.25 }}
-            className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-5 border-t border-white/5"
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="md:hidden fixed inset-x-0 bottom-0 z-[70] rounded-t-3xl border-t border-white/10 bg-[#05070d] shadow-2xl"
+            role="dialog"
+            aria-modal="true"
           >
-            <Link
-              href="/landing#waitlist"
-              onClick={onClose}
-              className="w-full inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-base font-semibold px-6 py-4 rounded-md shadow-lg shadow-[#3b82f6]/25 transition-all"
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
+
+            <div className="px-6 pt-4 pb-2 flex items-center justify-between">
+              <Logo />
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-md text-white hover:bg-white/5 transition-colors"
+                aria-label="Close menu"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="6" y1="18" x2="18" y2="6" />
+                </svg>
+              </button>
+            </div>
+
+            <nav className="flex flex-col gap-1 px-5 py-4">
+              {items.map((item, i) => (
+                <motion.div
+                  key={item.href}
+                  initial={{ y: 30, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 + i * 0.06, duration: 0.3 }}
+                >
+                  <Link
+                    href={item.href}
+                    onClick={onClose}
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-lg font-semibold text-white hover:bg-white/5 transition-colors"
+                  >
+                    {item.label}
+                    <span className="ml-auto text-[#475569] text-sm" aria-hidden>
+                      &rsaquo;
+                    </span>
+                  </Link>
+                </motion.div>
+              ))}
+            </nav>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.35, duration: 0.3 }}
+              className="px-6 pb-8 pt-3 border-t border-white/5"
             >
-              Get early access
-              <span aria-hidden>→</span>
-            </Link>
+              <Link
+                href="/landing#waitlist"
+                onClick={onClose}
+                className="w-full inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-base font-semibold px-6 py-4 rounded-xl shadow-lg shadow-[#3b82f6]/25 transition-all"
+              >
+                Get early access
+                <span aria-hidden>&rarr;</span>
+              </Link>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
@@ -343,14 +362,17 @@ export function Footer() {
           <p className="mt-2 text-sm text-[#64748b]">Your mate of the market.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-x-10 gap-y-3 text-sm text-[#64748b]">
-          <Link href="/landing#reviews" className="hover:text-white transition-colors">
-            Reviews
-          </Link>
           <Link href="/landing/features" className="hover:text-white transition-colors">
             Features
           </Link>
+          <Link href="/landing#reviews" className="hover:text-white transition-colors">
+            Reviews
+          </Link>
           <Link href="/landing#faq" className="hover:text-white transition-colors">
             FAQs
+          </Link>
+          <Link href="/landing#about" className="hover:text-white transition-colors">
+            About Me
           </Link>
           <Link href="/landing#waitlist" className="hover:text-white transition-colors">
             Waitlist

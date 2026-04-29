@@ -4,12 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const COACHING_TZ = "Europe/London";
 const DAY_START_HOUR = 9;
-const DAY_END_HOUR = 19; // exclusive — last slot is 18:30
+const DAY_END_HOUR = 19;
 const SLOT_MINUTES = 30;
-const DAYS_AHEAD = 14;
 
-// ── Time helpers ──────────────────────────────────────────────────
-function tzOffsetMinutes(date: Date, tz: string): number {
+function tzParts(date: Date, tz: string) {
   const dtf = new Intl.DateTimeFormat("en-US", {
     timeZone: tz,
     hour12: false,
@@ -22,24 +20,28 @@ function tzOffsetMinutes(date: Date, tz: string): number {
   });
   const parts = dtf.formatToParts(date);
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
-  const asUTC = Date.UTC(
-    get("year"),
-    get("month") - 1,
-    get("day"),
-    get("hour"),
-    get("minute"),
-    get("second")
-  );
-  return Math.round((asUTC - date.getTime()) / 60000);
+  return { y: get("year"), m: get("month"), d: get("day"), h: get("hour"), min: get("minute") };
 }
 
-function buildSlot(londonYmd: { y: number; m: number; d: number }, hour: number, minute: number): Date {
-  const { y, m, d } = londonYmd;
+function buildSlot(y: number, m: number, d: number, hour: number, minute: number): Date {
   const hh = String(hour).padStart(2, "0");
   const mm = String(minute).padStart(2, "0");
   const ymd = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   const probe = new Date(`${ymd}T${hh}:${mm}:00Z`);
-  const offset = tzOffsetMinutes(probe, COACHING_TZ);
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: COACHING_TZ,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const parts = dtf.formatToParts(probe);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  const asUTC = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  const offset = Math.round((asUTC - probe.getTime()) / 60000);
   const sign = offset >= 0 ? "+" : "-";
   const abs = Math.abs(offset);
   const oh = String(Math.floor(abs / 60)).padStart(2, "0");
@@ -47,105 +49,86 @@ function buildSlot(londonYmd: { y: number; m: number; d: number }, hour: number,
   return new Date(`${ymd}T${hh}:${mm}:00${sign}${oh}:${om}`);
 }
 
-function todayInLondon(): { y: number; m: number; d: number } {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: COACHING_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
-  return { y: get("year"), m: get("month"), d: get("day") };
+function todayInLondon() {
+  const p = tzParts(new Date(), COACHING_TZ);
+  return { y: p.y, m: p.m, d: p.d };
 }
 
-function addDays(londonYmd: { y: number; m: number; d: number }, n: number) {
-  // Anchor at noon UTC on the date so DST never bumps the day.
-  const anchor = new Date(
-    Date.UTC(londonYmd.y, londonYmd.m - 1, londonYmd.d, 12, 0, 0)
-  );
-  anchor.setUTCDate(anchor.getUTCDate() + n);
-  return {
-    y: anchor.getUTCFullYear(),
-    m: anchor.getUTCMonth() + 1,
-    d: anchor.getUTCDate(),
-  };
+function fmtTime(d: Date, tz: string) {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit" }).format(d);
 }
 
-function fmtDayLabel(londonYmd: { y: number; m: number; d: number }): string {
-  // Render the date label in London tz so it lines up with the slots.
-  const probe = new Date(
-    Date.UTC(londonYmd.y, londonYmd.m - 1, londonYmd.d, 12, 0, 0)
-  );
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: COACHING_TZ,
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(probe);
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function daysInMonth(y: number, m: number) {
+  return new Date(y, m, 0).getDate();
 }
 
-function fmtSlotInTz(d: Date, tz: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: tz,
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
+function firstDayOfWeek(y: number, m: number) {
+  const d = new Date(y, m - 1, 1).getDay();
+  return d === 0 ? 6 : d - 1;
 }
 
-// ── Modal ─────────────────────────────────────────────────────────
+function isSameDay(a: { y: number; m: number; d: number }, b: { y: number; m: number; d: number }) {
+  return a.y === b.y && a.m === b.m && a.d === b.d;
+}
+
+function isPast(day: { y: number; m: number; d: number }, today: { y: number; m: number; d: number }) {
+  if (day.y < today.y) return true;
+  if (day.y === today.y && day.m < today.m) return true;
+  if (day.y === today.y && day.m === today.m && day.d < today.d) return true;
+  return false;
+}
+
 interface BookingModalProps {
   open: boolean;
   onClose: () => void;
 }
 
+type Step = "calendar" | "time" | "details";
+
 export default function BookingModal({ open, onClose }: BookingModalProps) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const today = useMemo(() => todayInLondon(), []);
+  const [viewMonth, setViewMonth] = useState({ y: today.y, m: today.m });
+  const [selectedDay, setSelectedDay] = useState<{ y: number; m: number; d: number } | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set());
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [topic, setTopic] = useState("");
-  const [selected, setSelected] = useState<Date | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<Date | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  const [step, setStep] = useState<Step>("calendar");
+  const closeRef = useRef<HTMLButtonElement | null>(null);
 
   const userTz = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
     []
   );
 
-  // Build 14-day × slot grid in London time.
-  const days = useMemo(() => {
-    const today = todayInLondon();
-    const list: { ymd: { y: number; m: number; d: number }; slots: Date[] }[] = [];
-    for (let i = 0; i < DAYS_AHEAD; i++) {
-      const ymd = addDays(today, i);
-      const slots: Date[] = [];
-      for (let h = DAY_START_HOUR; h < DAY_END_HOUR; h++) {
-        for (let m = 0; m < 60; m += SLOT_MINUTES) {
-          const start = buildSlot(ymd, h, m);
-          if (start.getTime() < Date.now()) continue;
-          slots.push(start);
-        }
-      }
-      list.push({ ymd, slots });
-    }
-    return list;
-  }, []);
+  const selectedDayKey = selectedDay ? `${selectedDay.y}-${selectedDay.m}-${selectedDay.d}` : "";
 
-  // Reset state when the modal closes so reopening starts fresh.
   useEffect(() => {
     if (open) {
       setError(null);
-      // Focus the close button so Esc / tab order is sane.
-      closeButtonRef.current?.focus();
+      closeRef.current?.focus();
     } else {
-      setSelected(null);
+      setSelectedDay(null);
+      setSelectedSlot(null);
       setSubmitting(false);
       setConfirmed(null);
+      setStep("calendar");
+      setName("");
+      setEmail("");
+      setBookedSlots(new Set());
     }
   }, [open]);
 
-  // Esc-to-close + body scroll lock while the modal is up.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -160,21 +143,74 @@ export default function BookingModal({ open, onClose }: BookingModalProps) {
     };
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!selectedDayKey || !selectedDay) return;
+    setLoadingSlots(true);
+    const dateStr = `${selectedDay.y}-${String(selectedDay.m).padStart(2, "0")}-${String(selectedDay.d).padStart(2, "0")}`;
+    fetch(`/api/coaching/slots?date=${dateStr}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.booked && Array.isArray(data.booked)) {
+          setBookedSlots(new Set(data.booked as string[]));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSlots(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDayKey]);
+
   if (!open) return null;
 
+  const totalDays = daysInMonth(viewMonth.y, viewMonth.m);
+  const startOffset = firstDayOfWeek(viewMonth.y, viewMonth.m);
+
+  function prevMonth() {
+    setViewMonth((v) => {
+      if (v.m === 1) return { y: v.y - 1, m: 12 };
+      return { y: v.y, m: v.m - 1 };
+    });
+  }
+
+  function nextMonth() {
+    setViewMonth((v) => {
+      if (v.m === 12) return { y: v.y + 1, m: 1 };
+      return { y: v.y, m: v.m + 1 };
+    });
+  }
+
+  const canGoPrev = viewMonth.y > today.y || (viewMonth.y === today.y && viewMonth.m > today.m);
+
+  function selectDay(d: number) {
+    const day = { y: viewMonth.y, m: viewMonth.m, d };
+    if (isPast(day, today)) return;
+    setSelectedDay(day);
+    setSelectedSlot(null);
+    setStep("time");
+  }
+
+  const timeSlots: Date[] = useMemo(() => {
+    if (!selectedDay) return [];
+    const slots: Date[] = [];
+    for (let h = DAY_START_HOUR; h < DAY_END_HOUR; h++) {
+      for (let m = 0; m < 60; m += SLOT_MINUTES) {
+        const s = buildSlot(selectedDay.y, selectedDay.m, selectedDay.d, h, m);
+        if (s.getTime() > Date.now()) slots.push(s);
+      }
+    }
+    return slots;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDayKey]);
+
+  function pickSlot(s: Date) {
+    if (bookedSlots.has(s.toISOString())) return;
+    setSelectedSlot(s);
+    setStep("details");
+  }
+
   async function submit() {
-    if (!selected) {
-      setError("Pick a slot first");
-      return;
-    }
-    if (!name.trim()) {
-      setError("Tell us your name");
-      return;
-    }
-    if (!email.trim()) {
-      setError("Enter your email");
-      return;
-    }
+    if (!selectedSlot) return;
+    if (!name.trim()) { setError("Enter your name"); return; }
+    if (!email.trim()) { setError("Enter your email"); return; }
     setSubmitting(true);
     setError(null);
     try {
@@ -184,70 +220,96 @@ export default function BookingModal({ open, onClose }: BookingModalProps) {
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
-          starts_at: selected.toISOString(),
-          topic: topic.trim() || undefined,
+          starts_at: selectedSlot.toISOString(),
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error ?? "Could not book that slot — try another?");
+        if (data?.error?.includes("already booked")) {
+          setBookedSlots((prev) => new Set([...prev, selectedSlot.toISOString()]));
+        }
+        setError(data?.error ?? "Could not book that slot. Try another?");
         setSubmitting(false);
         return;
       }
-      setConfirmed(selected);
+      setConfirmed(selectedSlot);
     } catch {
-      setError("Network error — try again in a moment.");
+      setError("Network error. Try again in a moment.");
     } finally {
       setSubmitting(false);
     }
   }
 
+  const selectedDayLabel = selectedDay
+    ? new Intl.DateTimeFormat("en-GB", {
+        timeZone: COACHING_TZ,
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }).format(new Date(Date.UTC(selectedDay.y, selectedDay.m - 1, selectedDay.d, 12)))
+    : "";
+
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center px-4 py-6 bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center px-0 sm:px-4 py-0 sm:py-6 bg-black/80 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="booking-title"
     >
       <div
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#05070d] shadow-2xl"
+        className="relative w-full sm:max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#05070d] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 px-6 py-5 border-b border-white/10 bg-[#05070d]">
-          <div>
-            <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#3b82f6] mb-1">
-              30-minute call with Banjo
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-5 py-4 border-b border-white/10 bg-[#05070d]">
+          <div className="flex items-center gap-3">
+            {step !== "calendar" && !confirmed && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (step === "details") setStep("time");
+                  else setStep("calendar");
+                }}
+                className="shrink-0 w-8 h-8 rounded-lg border border-white/10 hover:border-white/30 text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors"
+                aria-label="Back"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+            <div>
+              <h2 className="text-base font-bold text-white tracking-tight">
+                {confirmed
+                  ? "You're booked in"
+                  : step === "calendar"
+                  ? "Pick a day"
+                  : step === "time"
+                  ? "Pick a time"
+                  : "Create your account"}
+              </h2>
+              {!confirmed && step === "time" && selectedDay && (
+                <p className="text-[11px] text-[#64748b] mt-0.5">{selectedDayLabel}</p>
+              )}
             </div>
-            <h2
-              id="booking-title"
-              className="text-xl sm:text-2xl font-bold text-white tracking-tight"
-            >
-              Pick a time that works for you
-            </h2>
-            <p className="text-xs text-[#64748b] mt-1">
-              All times shown in <span className="text-white">{userTz}</span> ·
-              sessions run 9:00–19:00 London time
-            </p>
           </div>
           <button
-            ref={closeButtonRef}
+            ref={closeRef}
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 w-9 h-9 rounded-lg border border-white/10 hover:border-white/30 text-[#94a3b8] hover:text-white flex items-center justify-center text-lg leading-none transition-colors"
+            className="shrink-0 w-8 h-8 rounded-lg border border-white/10 hover:border-white/30 text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors"
           >
-            ×
+            &times;
           </button>
         </div>
 
         {confirmed ? (
           <div className="p-8 text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#22c55e]/15 border border-[#22c55e]/30 mb-5">
-              <span className="text-2xl text-[#22c55e]">✓</span>
+              <span className="text-2xl text-[#22c55e]">&#10003;</span>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">
+            <h3 className="text-xl font-bold text-white mb-3">
               You&rsquo;re booked in.
             </h3>
             <p className="text-sm text-[#94a3b8] mb-2 leading-relaxed">
@@ -262,15 +324,11 @@ export default function BookingModal({ open, onClose }: BookingModalProps) {
                   minute: "2-digit",
                 }).format(confirmed)}
               </strong>
-              <span className="text-[#475569]">
-                {" "}
-                ({fmtSlotInTz(confirmed, COACHING_TZ)} London)
-              </span>
               .
             </p>
             <p className="text-sm text-[#94a3b8] mb-6 leading-relaxed">
               Banjo will send the meeting link to{" "}
-              <strong className="text-white">{email}</strong> before the slot.
+              <strong className="text-white">{email}</strong> before your session.
             </p>
             <button
               type="button"
@@ -280,152 +338,196 @@ export default function BookingModal({ open, onClose }: BookingModalProps) {
               Done
             </button>
           </div>
-        ) : (
-          <>
-            {/* Slot picker */}
-            <div className="px-6 py-5">
-              <div className="overflow-x-auto -mx-2 px-2">
-                <div className="flex gap-3 min-w-max pb-2">
-                  {days.map(({ ymd, slots }) => (
-                    <div
-                      key={`${ymd.y}-${ymd.m}-${ymd.d}`}
-                      className="w-[160px] shrink-0 rounded-xl border border-white/10 bg-[#0a0e17] p-3"
-                    >
-                      <div className="text-center mb-3">
-                        <div className="text-[10px] uppercase tracking-wider font-bold text-[#3b82f6]">
-                          {fmtDayLabel(ymd).split(" ")[0]}
-                        </div>
-                        <div className="text-sm font-semibold text-white mt-0.5">
-                          {fmtDayLabel(ymd).split(" ").slice(1).join(" ")}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {slots.length === 0 && (
-                          <div className="col-span-2 text-center text-[11px] text-[#475569] py-4">
-                            —
-                          </div>
-                        )}
-                        {slots.map((s) => {
-                          const iso = s.toISOString();
-                          const isSelected =
-                            selected?.toISOString() === iso;
-                          return (
-                            <button
-                              key={iso}
-                              type="button"
-                              onClick={() => setSelected(s)}
-                              className={`text-[11px] rounded-md py-1.5 transition-colors font-medium ${
-                                isSelected
-                                  ? "bg-[#3b82f6] text-white"
-                                  : "bg-white/[0.03] text-[#e2e8f0] hover:bg-[#3b82f6]/20 hover:text-white"
-                              }`}
-                            >
-                              {fmtSlotInTz(s, userTz)}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+        ) : step === "calendar" ? (
+          <div className="px-5 py-5">
+            {/* Month navigation */}
+            <div className="flex items-center justify-between mb-4">
+              <button
+                type="button"
+                onClick={prevMonth}
+                disabled={!canGoPrev}
+                className="w-8 h-8 rounded-lg border border-white/10 hover:border-white/30 disabled:opacity-20 disabled:cursor-not-allowed text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <span className="text-sm font-semibold text-white">
+                {MONTH_NAMES[viewMonth.m - 1]} {viewMonth.y}
+              </span>
+              <button
+                type="button"
+                onClick={nextMonth}
+                className="w-8 h-8 rounded-lg border border-white/10 hover:border-white/30 text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Day headers */}
+            <div className="grid grid-cols-7 gap-1 mb-1">
+              {DAY_NAMES.map((dn) => (
+                <div key={dn} className="text-center text-[10px] uppercase tracking-wider font-bold text-[#475569] py-1">
+                  {dn}
                 </div>
+              ))}
+            </div>
+
+            {/* Day grid */}
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: startOffset }).map((_, i) => (
+                <div key={`empty-${i}`} />
+              ))}
+              {Array.from({ length: totalDays }).map((_, i) => {
+                const d = i + 1;
+                const day = { y: viewMonth.y, m: viewMonth.m, d };
+                const past = isPast(day, today);
+                const isToday = isSameDay(day, today);
+                const isSelected = selectedDay && isSameDay(day, selectedDay);
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    disabled={past}
+                    onClick={() => selectDay(d)}
+                    className={`aspect-square rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
+                      past
+                        ? "text-[#2a2e3a] cursor-not-allowed"
+                        : isSelected
+                        ? "bg-[#3b82f6] text-white shadow-lg shadow-[#3b82f6]/30"
+                        : isToday
+                        ? "bg-white/[0.08] text-white ring-1 ring-[#3b82f6]/40 hover:bg-[#3b82f6]/20"
+                        : "text-[#e2e8f0] hover:bg-white/[0.06]"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="mt-4 text-[11px] text-[#475569] text-center">
+              Weekdays and weekends. Sessions run 9:00-19:00 London time.
+            </p>
+          </div>
+        ) : step === "time" ? (
+          <div className="px-5 py-5">
+            {loadingSlots ? (
+              <div className="py-12 text-center text-sm text-[#64748b]">Loading available times...</div>
+            ) : timeSlots.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm text-[#94a3b8] mb-3">No available slots left today.</p>
+                <button
+                  type="button"
+                  onClick={() => setStep("calendar")}
+                  className="text-sm text-[#3b82f6] hover:text-[#60a5fa] font-semibold transition-colors"
+                >
+                  Pick another day
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  {timeSlots.map((s) => {
+                    const iso = s.toISOString();
+                    const booked = bookedSlots.has(iso);
+                    const isSelected = selectedSlot?.toISOString() === iso;
+                    return (
+                      <button
+                        key={iso}
+                        type="button"
+                        disabled={booked}
+                        onClick={() => pickSlot(s)}
+                        className={`rounded-lg py-3 text-sm font-medium transition-all ${
+                          booked
+                            ? "bg-white/[0.02] text-[#2a2e3a] cursor-not-allowed line-through"
+                            : isSelected
+                            ? "bg-[#3b82f6] text-white shadow-lg shadow-[#3b82f6]/30"
+                            : "bg-white/[0.03] text-[#e2e8f0] hover:bg-[#3b82f6]/15 hover:text-white border border-white/5 hover:border-[#3b82f6]/30"
+                        }`}
+                      >
+                        {fmtTime(s, userTz)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-4 text-[11px] text-[#475569] text-center">
+                  Times shown in {userTz}. Greyed out slots are already booked.
+                </p>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="px-5 py-5">
+            <div className="rounded-lg bg-white/[0.03] border border-white/5 px-4 py-3 mb-5">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-[#3b82f6] mb-1">Your session</div>
+              <div className="text-sm font-semibold text-white">
+                {selectedSlot && new Intl.DateTimeFormat("en-GB", {
+                  timeZone: userTz,
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(selectedSlot)}
               </div>
             </div>
 
-            {/* Form */}
-            <div className="px-6 py-5 border-t border-white/10 bg-[#0a0e17]">
-              {selected ? (
-                <div className="mb-4 text-sm text-[#e2e8f0]">
-                  <span className="text-[#94a3b8]">Selected:</span>{" "}
-                  <span className="font-semibold text-white">
-                    {new Intl.DateTimeFormat("en-GB", {
-                      timeZone: userTz,
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }).format(selected)}
-                  </span>
-                  <span className="text-[#475569]">
-                    {" "}
-                    ({fmtSlotInTz(selected, COACHING_TZ)} London)
-                  </span>
-                </div>
-              ) : (
-                <p className="mb-4 text-sm text-[#64748b]">
-                  Pick a slot above to continue.
-                </p>
-              )}
+            <p className="text-sm text-[#94a3b8] mb-5 leading-relaxed">
+              Enter your name and email to create your TraderM8 account and confirm the booking.
+            </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="block">
-                  <div className="text-[11px] uppercase tracking-wider font-bold text-[#94a3b8] mb-2">
-                    Your name
-                  </div>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    maxLength={200}
-                    placeholder="Jane Trader"
-                    className="w-full bg-[#05070d] border border-white/10 rounded-md px-4 py-2.5 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
-                  />
-                </label>
-                <label className="block">
-                  <div className="text-[11px] uppercase tracking-wider font-bold text-[#94a3b8] mb-2">
-                    Email
-                  </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full bg-[#05070d] border border-white/10 rounded-md px-4 py-2.5 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
-                  />
-                </label>
-              </div>
-
-              <label className="block mt-3">
+            <div className="space-y-3">
+              <label className="block">
                 <div className="text-[11px] uppercase tracking-wider font-bold text-[#94a3b8] mb-2">
-                  What do you want to cover?{" "}
-                  <span className="text-[#475569] normal-case">(optional)</span>
+                  Your name
                 </div>
-                <textarea
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  rows={3}
-                  maxLength={500}
-                  placeholder="e.g. liquidity reads on NQ, journaling habits, sizing rules..."
-                  className="w-full bg-[#05070d] border border-white/10 rounded-md px-4 py-2.5 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] resize-y transition-colors"
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={200}
+                  placeholder="First and last name"
+                  autoComplete="name"
+                  className="w-full bg-[#0a0e17] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 transition-colors"
                 />
               </label>
-
-              {error && (
-                <div className="mt-3 text-sm text-[#ef4444]">{error}</div>
-              )}
-
-              <div className="mt-5 flex flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={submitting || !selected}
-                  className="flex-1 inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-6 py-3 rounded-lg shadow-lg shadow-[#3b82f6]/25 transition-all"
-                >
-                  {submitting
-                    ? "Booking..."
-                    : "Confirm 30-min call (free)"}
-                </button>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={submitting}
-                  className="inline-flex items-center justify-center gap-2 border border-white/10 hover:border-white/30 disabled:opacity-50 text-white text-sm font-semibold px-6 py-3 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
+              <label className="block">
+                <div className="text-[11px] uppercase tracking-wider font-bold text-[#94a3b8] mb-2">
+                  Email
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className="w-full bg-[#0a0e17] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]/30 transition-colors"
+                />
+              </label>
             </div>
-          </>
+
+            {error && (
+              <div className="mt-3 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/20 px-4 py-3 text-sm text-[#ef4444]">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={submit}
+              disabled={submitting}
+              className="mt-5 w-full inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-50 text-white text-sm font-semibold px-6 py-3.5 rounded-lg shadow-lg shadow-[#3b82f6]/25 transition-all hover:shadow-[#3b82f6]/40"
+            >
+              {submitting ? "Creating account & booking..." : "Create account & book session"}
+            </button>
+
+            <p className="mt-3 text-center text-[11px] text-[#475569]">
+              Your first 30-minute session is free. No card required.
+            </p>
+          </div>
         )}
       </div>
     </div>
