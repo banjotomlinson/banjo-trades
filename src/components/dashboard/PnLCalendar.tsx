@@ -174,6 +174,19 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
   );
 
   const headlinePnl = view === "yearly" ? yearlyPnl : monthlyPnl;
+
+  const winRate = useMemo(() => {
+    const yr = cursor.getFullYear();
+    const mo = cursor.getMonth();
+    const filtered = trades.filter((t) => {
+      const d = new Date(t.date + "T00:00:00");
+      if (view === "yearly") return d.getFullYear() === yr;
+      return d.getFullYear() === yr && d.getMonth() === mo;
+    });
+    if (filtered.length === 0) return null;
+    const wins = filtered.filter((t) => t.pnl > 0).length;
+    return Math.round((wins / filtered.length) * 100);
+  }, [trades, cursor, view]);
   const headlineLabel = view === "yearly" ? "Yearly P/L" : "Monthly P/L";
 
   const monthLabel = cursor.toLocaleDateString("en-US", {
@@ -234,11 +247,21 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
   return (
     <div className="bg-panel border border-border rounded-xl overflow-hidden">
       <div className="pt-6 pb-4 flex flex-col items-center gap-3">
-        <div className="text-base font-medium text-muted">
-          {headlineLabel}:{" "}
-          <span className={`text-xl font-bold ${pnlColor}`}>
-            {formatCurrency(headlinePnl)}
-          </span>
+        <div className="flex items-center gap-6">
+          <div className="text-base font-medium text-muted">
+            {headlineLabel}:{" "}
+            <span className={`text-xl font-bold ${pnlColor}`}>
+              {formatCurrency(headlinePnl)}
+            </span>
+          </div>
+          {winRate !== null && (
+            <div className="text-base font-medium text-muted">
+              Win Rate:{" "}
+              <span className={`text-xl font-bold ${winRate >= 50 ? "text-bull" : "text-bear"}`}>
+                {winRate}%
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex bg-background border border-border rounded-md p-0.5">
           {(["monthly", "yearly"] as View[]).map((v) => (
