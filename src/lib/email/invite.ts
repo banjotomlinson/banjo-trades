@@ -29,7 +29,7 @@ export async function sendInviteEmail(input: {
   const firstName = input.name?.split(/\s+/)[0] ?? null;
   const greeting = firstName ? `Hey ${escape(firstName)},` : "Hey,";
 
-  const subject = "🎉 Your TraderM8 spot is ready — create your account";
+  const subject = "Your TraderM8 spot is ready — create your account";
 
   const text = [
     greeting,
