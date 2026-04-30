@@ -666,6 +666,11 @@ function Waitlist() {
               ? "Sit tight. We'll email when your spot opens up."
               : "We'll send you an invite when the closed beta opens. Keep an eye on your inbox."}
           </p>
+          {!alreadyJoined && (
+            <p className="mt-4 text-xs text-[#475569]">
+              Can&apos;t find the email? Check your junk or spam folder.
+            </p>
+          )}
         </div>
       </section>
     );
