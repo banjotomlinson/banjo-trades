@@ -266,59 +266,97 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
 
   return (
     <div className="bg-panel border border-border rounded-xl overflow-hidden">
-      <div className="pt-6 pb-4 flex flex-col items-center gap-3">
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-          <div className="text-base font-medium text-muted">
-            {headlineLabel}:{" "}
-            <span className={`text-xl font-bold ${pnlColor}`}>
-              {formatCurrency(headlinePnl)}
-            </span>
+      {/* ── Stats header ── */}
+      <div className="px-5 pt-5 pb-4 border-b border-border">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-foreground">P&amp;L Journal</h2>
+          <div className="flex bg-background border border-border rounded-md p-0.5">
+            {(["monthly", "yearly"] as View[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-3 py-1 rounded-[5px] text-xs font-semibold transition-all ${
+                  view === v
+                    ? "bg-accent text-white"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            ))}
           </div>
-          {periodStats && (
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* Total P&L */}
+          <div className="bg-background border border-border rounded-lg px-4 py-3">
+            <div className="text-[10px] uppercase tracking-wider font-bold text-muted mb-1">
+              {headlineLabel}
+            </div>
+            <div className={`text-lg font-bold tabular-nums ${pnlColor}`}>
+              {formatCurrency(headlinePnl)}
+            </div>
+          </div>
+
+          {periodStats ? (
             <>
-              <div className="text-base font-medium text-muted">
-                Win Rate:{" "}
-                <span className={`text-xl font-bold ${periodStats.winRate >= 50 ? "text-bull" : "text-bear"}`}>
+              {/* Win Rate */}
+              <div className="bg-background border border-border rounded-lg px-4 py-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-muted mb-1">
+                  Win Rate
+                </div>
+                <div className={`text-lg font-bold tabular-nums ${periodStats.winRate >= 50 ? "text-bull" : "text-bear"}`}>
                   {periodStats.winRate}%
-                </span>
+                </div>
               </div>
-              <div className="text-base font-medium text-muted">
-                Days:{" "}
-                <span className="text-xl font-bold text-bull">{periodStats.winDays}W</span>
-                <span className="text-muted font-bold"> · </span>
-                <span className="text-xl font-bold text-bear">{periodStats.lossDays}L</span>
+
+              {/* W/L Days */}
+              <div className="bg-background border border-border rounded-lg px-4 py-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-muted mb-1">
+                  Days
+                </div>
+                <div className="text-lg font-bold tabular-nums">
+                  <span className="text-bull">{periodStats.winDays}W</span>
+                  <span className="text-muted mx-1">·</span>
+                  <span className="text-bear">{periodStats.lossDays}L</span>
+                </div>
               </div>
-              <div className="text-base font-medium text-muted">
-                Best:{" "}
-                <span className="text-xl font-bold text-bull">{formatCurrency(periodStats.bestDay)}</span>
+
+              {/* Best Day */}
+              <div className="bg-background border border-border rounded-lg px-4 py-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-muted mb-1">
+                  Best Day
+                </div>
+                <div className="text-lg font-bold tabular-nums text-bull">
+                  {formatCurrency(periodStats.bestDay)}
+                </div>
               </div>
-              <div className="text-base font-medium text-muted">
-                Worst:{" "}
-                <span className="text-xl font-bold text-bear">{formatCurrency(periodStats.worstDay)}</span>
+
+              {/* Worst Day */}
+              <div className="bg-background border border-border rounded-lg px-4 py-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-muted mb-1">
+                  Worst Day
+                </div>
+                <div className="text-lg font-bold tabular-nums text-bear">
+                  {formatCurrency(periodStats.worstDay)}
+                </div>
               </div>
-              <div className="text-base font-medium text-muted">
-                Avg/Day:{" "}
-                <span className={`text-xl font-bold ${periodStats.avgDaily >= 0 ? "text-bull" : "text-bear"}`}>
+
+              {/* Avg/Day */}
+              <div className="bg-background border border-border rounded-lg px-4 py-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-muted mb-1">
+                  Avg / Day
+                </div>
+                <div className={`text-lg font-bold tabular-nums ${periodStats.avgDaily >= 0 ? "text-bull" : "text-bear"}`}>
                   {formatCurrency(periodStats.avgDaily)}
-                </span>
+                </div>
               </div>
             </>
+          ) : (
+            <div className="col-span-5 flex items-center px-2 text-xs text-muted">
+              Log your first trade to see stats here.
+            </div>
           )}
-        </div>
-        <div className="flex bg-background border border-border rounded-md p-0.5">
-          {(["monthly", "yearly"] as View[]).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-3 py-1 rounded-[5px] text-xs font-semibold transition-all ${
-                view === v
-                  ? "bg-accent text-white"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              {v.charAt(0).toUpperCase() + v.slice(1)}
-            </button>
-          ))}
         </div>
       </div>
 
