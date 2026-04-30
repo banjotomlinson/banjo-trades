@@ -175,7 +175,7 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
 
   const headlinePnl = view === "yearly" ? yearlyPnl : monthlyPnl;
 
-  const winRate = useMemo(() => {
+  const periodStats = useMemo(() => {
     const yr = cursor.getFullYear();
     const mo = cursor.getMonth();
     const filtered = trades.filter((t) => {
@@ -184,8 +184,28 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
       return d.getFullYear() === yr && d.getMonth() === mo;
     });
     if (filtered.length === 0) return null;
-    const wins = filtered.filter((t) => t.pnl > 0).length;
-    return Math.round((wins / filtered.length) * 100);
+
+    // Aggregate by day
+    const dayMap = new Map<string, number>();
+    for (const t of filtered) dayMap.set(t.date, (dayMap.get(t.date) ?? 0) + t.pnl);
+    const days = [...dayMap.values()];
+
+    const winDays = days.filter((p) => p > 0).length;
+    const lossDays = days.filter((p) => p < 0).length;
+    const activeDays = days.length;
+    const winRate = Math.round((winDays / activeDays) * 100);
+
+    let bestDay = -Infinity;
+    let worstDay = Infinity;
+    for (const p of days) {
+      if (p > bestDay) bestDay = p;
+      if (p < worstDay) worstDay = p;
+    }
+
+    const totalPnl = days.reduce((s, p) => s + p, 0);
+    const avgDaily = activeDays > 0 ? totalPnl / activeDays : 0;
+
+    return { winRate, winDays, lossDays, activeDays, bestDay, worstDay, avgDaily };
   }, [trades, cursor, view]);
   const headlineLabel = view === "yearly" ? "Yearly P/L" : "Monthly P/L";
 
@@ -247,20 +267,42 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
   return (
     <div className="bg-panel border border-border rounded-xl overflow-hidden">
       <div className="pt-6 pb-4 flex flex-col items-center gap-3">
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           <div className="text-base font-medium text-muted">
             {headlineLabel}:{" "}
             <span className={`text-xl font-bold ${pnlColor}`}>
               {formatCurrency(headlinePnl)}
             </span>
           </div>
-          {winRate !== null && (
-            <div className="text-base font-medium text-muted">
-              Win Rate:{" "}
-              <span className={`text-xl font-bold ${winRate >= 50 ? "text-bull" : "text-bear"}`}>
-                {winRate}%
-              </span>
-            </div>
+          {periodStats && (
+            <>
+              <div className="text-base font-medium text-muted">
+                Win Rate:{" "}
+                <span className={`text-xl font-bold ${periodStats.winRate >= 50 ? "text-bull" : "text-bear"}`}>
+                  {periodStats.winRate}%
+                </span>
+              </div>
+              <div className="text-base font-medium text-muted">
+                Days:{" "}
+                <span className="text-xl font-bold text-bull">{periodStats.winDays}W</span>
+                <span className="text-muted font-bold"> · </span>
+                <span className="text-xl font-bold text-bear">{periodStats.lossDays}L</span>
+              </div>
+              <div className="text-base font-medium text-muted">
+                Best:{" "}
+                <span className="text-xl font-bold text-bull">{formatCurrency(periodStats.bestDay)}</span>
+              </div>
+              <div className="text-base font-medium text-muted">
+                Worst:{" "}
+                <span className="text-xl font-bold text-bear">{formatCurrency(periodStats.worstDay)}</span>
+              </div>
+              <div className="text-base font-medium text-muted">
+                Avg/Day:{" "}
+                <span className={`text-xl font-bold ${periodStats.avgDaily >= 0 ? "text-bull" : "text-bear"}`}>
+                  {formatCurrency(periodStats.avgDaily)}
+                </span>
+              </div>
+            </>
           )}
         </div>
         <div className="flex bg-background border border-border rounded-md p-0.5">
