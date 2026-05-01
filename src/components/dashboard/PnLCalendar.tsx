@@ -685,7 +685,15 @@ function TradeEditor({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                if (amount.trim()) {
+                  const n = parseFloat(amount.replace(/[$,\s]/g, ""));
+                  if (Number.isFinite(n) && n !== 0) {
+                    onAdd(n, note.trim());
+                  }
+                }
+                onClose();
+              }}
               className="px-4 py-2 rounded-md text-sm font-semibold border border-border text-muted hover:text-white hover:border-muted transition-all"
             >
               Done
