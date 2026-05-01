@@ -70,15 +70,22 @@ export default function PnLCalendar({ trades: tradesProp }: PnLCalendarProps) {
     fetch("/api/trades")
       .then((res) => res.json())
       .then((data) => {
-        if (data.trades && Array.isArray(data.trades) && data.trades.length > 0) {
+        if (data.trades && Array.isArray(data.trades)) {
           const mapped: Trade[] = data.trades.map((t: { id: string; date: string; pnl: number; note?: string | null }) => ({
             id: t.id,
             date: typeof t.date === "string" ? t.date.slice(0, 10) : t.date,
             pnl: Number(t.pnl),
             note: t.note || undefined,
           }));
-          setLocalTrades(mapped);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
+          // Merge: Supabase is authoritative, but keep any localStorage-only
+          // trades that haven't synced yet so nothing gets wiped on reload.
+          setLocalTrades((prev) => {
+            const supabaseIds = new Set(mapped.map((t) => t.id));
+            const localOnly = prev.filter((t) => !supabaseIds.has(t.id));
+            const merged = [...mapped, ...localOnly];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            return merged;
+          });
         }
       })
       .catch(() => {});
