@@ -5,5 +5,5 @@ export const metadata = {
 };
 
 export default function PopoutCalculatorPage() {
-  return <PositionCalculator embedded />;
+  return <PositionCalculator embedded popoutMode />;
 }

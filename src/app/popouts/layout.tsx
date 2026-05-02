@@ -12,7 +12,7 @@ export default function PopoutLayout({
   return (
     <ThemeProvider>
       <TradingModeProvider>
-        <div className="min-h-screen bg-background text-foreground p-3">
+        <div className="h-screen overflow-hidden bg-background text-foreground">
           {children}
         </div>
       </TradingModeProvider>
