@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   INSTRUMENTS,
   type AssetClass,
@@ -38,7 +39,7 @@ interface PositionCalculatorProps {
 function FloatingCalc({ onClose }: { onClose: () => void }) {
   const { mode } = useTradingMode();
   const panelRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ x: window.innerWidth - 480, y: 80 });
+  const [pos, setPos] = useState({ x: Math.max(0, (typeof window !== "undefined" ? window.innerWidth : 1200) - 480), y: 80 });
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
 
@@ -96,16 +97,16 @@ function FloatingCalc({ onClose }: { onClose: () => void }) {
   const actualRisk = size * dollarPerUnit;
   const showResult = riskNum > 0 && stopNum > 0;
 
-  return (
+  return createPortal(
     <div
       ref={panelRef}
-      className="fixed z-[999] shadow-2xl rounded-xl overflow-hidden"
+      className="fixed z-[9999] shadow-2xl rounded-xl overflow-hidden"
       style={{
         left: pos.x,
         top: pos.y,
         width: 420,
-        background: "var(--color-panel, #111827)",
-        border: "1px solid var(--color-border, #1e293b)",
+        background: "#111827",
+        border: "1px solid #1e293b",
       }}
     >
       {/* Drag handle / header */}
@@ -207,7 +208,8 @@ function FloatingCalc({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
