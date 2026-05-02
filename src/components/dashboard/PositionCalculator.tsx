@@ -213,24 +213,9 @@ function FloatingCalc({ onClose }: { onClose: () => void }) {
   );
 }
 
-function openPopout(onBlocked: () => void) {
-  const w = window.open(
-    "/popouts/calculator",
-    "banjoCalc",
-    "popup=yes,width=440,height=720,resizable=yes,scrollbars=yes"
-  );
-  // If browser blocked the popup, fall back to the in-page floating panel
-  if (!w || w.closed || typeof w.closed === "undefined") {
-    onBlocked();
-  } else {
-    w.focus();
-  }
-}
-
 export default function PositionCalculator({ embedded = false }: PositionCalculatorProps = {}) {
   const { mode } = useTradingMode();
   const [floatOpen, setFloatOpen] = useState(false);
-  const [popupBlocked, setPopupBlocked] = useState(false);
   const [symbol, setSymbol] = useState<string>("NQ");
   const instrument: Instrument = INSTRUMENTS.find((i) => i.symbol === symbol) ?? INSTRUMENTS[0];
 
@@ -277,24 +262,17 @@ export default function PositionCalculator({ embedded = false }: PositionCalcula
             <p className="text-xs text-muted mt-0.5">Size your trade by risk amount and stop distance in points.</p>
           </div>
           {!embedded && (
-            <div className="flex flex-col items-end gap-1">
-              <button
-                onClick={() => openPopout(() => { setFloatOpen(true); setPopupBlocked(true); })}
-                title="Pop out into a separate window (drag across monitors)"
-                aria-label="Pop out calculator"
-                className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted hover:text-foreground border border-border hover:border-muted rounded-md px-2.5 py-1.5 transition-colors"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M14 4h6v6" /><path d="M20 4l-8 8" /><path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5" />
-                </svg>
-                Pop out
-              </button>
-              {popupBlocked && (
-                <p className="text-[10px] text-muted text-right max-w-[180px] leading-tight">
-                  Allow popups for traderm8.com to enable multi-monitor mode
-                </p>
-              )}
-            </div>
+            <button
+              onClick={() => setFloatOpen(true)}
+              title="Pop out into a floating window"
+              aria-label="Pop out calculator"
+              className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted hover:text-foreground border border-border hover:border-muted rounded-md px-2.5 py-1.5 transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M14 4h6v6" /><path d="M20 4l-8 8" /><path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5" />
+              </svg>
+              Pop out
+            </button>
           )}
         </div>
 
