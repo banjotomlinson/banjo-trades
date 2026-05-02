@@ -18,7 +18,7 @@ function admin() {
 
 interface CheckResult {
   ok: boolean;
-  reason?: "not_on_waitlist" | "past_cap" | "config" | "unknown";
+  reason?: "not_on_waitlist" | "past_cap" | "config" | "unknown" | "not_approved";
   position?: number;
 }
 
@@ -88,6 +88,10 @@ export async function GET(request: Request) {
 
   // Reject — sign out so middleware doesn't see them as authenticated.
   await supabase.auth.signOut();
+  // No account or not approved → send to landing page to apply for access.
+  if (check.reason === "not_on_waitlist" || check.reason === "not_approved") {
+    return NextResponse.redirect(`${origin}/landing`);
+  }
   const params = new URLSearchParams({ error: check.reason ?? "not_approved" });
   if (check.position) params.set("position", String(check.position));
   return NextResponse.redirect(`${origin}/login?${params.toString()}`);

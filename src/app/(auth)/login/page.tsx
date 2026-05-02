@@ -35,7 +35,8 @@ function LoginInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const displayError = error ?? urlMessage;
+  const displayError = (error && error !== "no_account") ? error : urlMessage;
+  const showNoAccount = error === "no_account";
 
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +45,7 @@ function LoginInner() {
     const supabase = createClient();
     const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
     if (signInErr) {
-      setError("Incorrect email or password.");
+      setError("no_account");
       setLoading(false);
       return;
     }
@@ -84,6 +85,19 @@ function LoginInner() {
               {position && urlError === "past_cap" && (
                 <div className="text-[#94a3b8] text-xs mt-1.5">Your waitlist position: #{position}</div>
               )}
+            </div>
+          )}
+
+          {showNoAccount && (
+            <div className="mb-5 rounded-xl border border-[#1e293b] bg-[#0a0e17] p-5 text-center">
+              <p className="text-sm text-[#94a3b8] mb-1">No account found for that email.</p>
+              <p className="text-xs text-[#475569] mb-4">TraderM8 is invite-only. Apply for early access on the landing page.</p>
+              <a
+                href="/landing"
+                className="inline-flex items-center justify-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
+              >
+                Apply for early access →
+              </a>
             </div>
           )}
 
