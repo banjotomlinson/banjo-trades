@@ -59,7 +59,7 @@ export default function Sidebar() {
       )}
 
       <aside
-        className="fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300"
+        className="fixed top-0 left-0 h-full z-50 flex-col transition-all duration-300 hidden md:flex"
         style={{
           width: collapsed ? 60 : 240,
           background: theme.panelBg,

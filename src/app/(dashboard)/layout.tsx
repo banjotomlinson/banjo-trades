@@ -1,4 +1,5 @@
 import Sidebar from "@/components/layout/Sidebar";
+import BottomNav from "@/components/layout/BottomNav";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import SidebarProvider from "@/components/providers/SidebarProvider";
 import TradingModeProvider from "@/components/providers/TradingModeProvider";
@@ -18,6 +19,7 @@ export default function DashboardLayout({
             <div className="flex min-h-screen">
               <Sidebar />
               <DashboardMain>{children}</DashboardMain>
+              <BottomNav />
             </div>
           </SidebarProvider>
         </CalendarFilterProvider>
